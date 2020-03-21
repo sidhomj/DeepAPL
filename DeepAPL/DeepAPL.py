@@ -174,7 +174,7 @@ class DeepAPL_SC(base):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def _build(self,weight_by_class=False,multisample_dropout_num_masks = 64,graph_seed=None):
+    def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None):
         GO = graph_object()
         with tf.device(self.device):
             GO.graph_model = tf.Graph()
@@ -290,7 +290,7 @@ class DeepAPL_SC(base):
             self.predicted[self.test_idx] += self.y_pred
             GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
 
-    def Train(self,weight_by_class=False,multisample_dropout_num_masks = 64,graph_seed=None,
+    def Train(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
               batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
               dropout_rate=0.0,multisample_dropout_rate=0.0):
         self._reset_models()
@@ -299,7 +299,7 @@ class DeepAPL_SC(base):
                     dropout_rate,multisample_dropout_rate)
 
     def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
-                             weight_by_class=False, multisample_dropout_num_masks=64,graph_seed=None,
+                             weight_by_class=False, multisample_dropout_num_masks=None,graph_seed=None,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                             dropout_rate = 0.0, multisample_dropout_rate = 0.0):
 
