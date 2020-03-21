@@ -425,29 +425,17 @@ class DeepAPL_SC(base):
             graph = tf.get_default_graph()
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
-            l1_var = graph.get_tensor_by_name('dropout/Identity:0')
-            l2_var = graph.get_tensor_by_name('dropout_1/Identity:0')
-            l3_var = graph.get_tensor_by_name('dropout_2/Identity:0')
             w_var = graph.get_tensor_by_name('dense/BiasAdd:0')
 
             predicted = []
             w = []
-            l1 = []
-            l2 = []
-            l3 = []
             for x in get_batches([self.imgs], batch_size=batch_size, random=False):
                 feed_dict = {X: x[0]}
-                predicted_i,w_temp, l1_temp,l2_temp,l3_temp = sess.run([pred,w_var,l1_var,l2_var,l3_var],feed_dict=feed_dict)
+                predicted_i,w_temp = sess.run([pred,w_var],feed_dict=feed_dict)
                 predicted.append(predicted_i)
-                l1.append(l1_temp)
-                l2.append(l2_temp)
-                l3.append(l3_temp)
                 w.append(w_temp)
 
             self.predicted = np.vstack(predicted)
-            self.l1 = np.vstack(l1)
-            self.l2 = np.vstack(l2)
-            self.l3 = np.vstack(l3)
             self.w = np.vstack(w)
 
             self.y_pred = self.predicted
