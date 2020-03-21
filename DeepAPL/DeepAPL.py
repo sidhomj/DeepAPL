@@ -367,6 +367,46 @@ class DeepAPL_SC(base):
 
         self.Cell_Pred = df
 
+    def Sample_Summary(self):
+        self.Cell_Pred.sort_index(inplace=True)
+        self.Cell_Pred['Patient'] = self.patients
+        if hasattr(self,'predicted_dist'):
+            group_dict = {'Label':'first'}
+            for ii in self.lb.classes_:
+                group_dict[ii] = 'mean'
+                group_dict[ii+'_ci'] = 'mean'
+
+        else:
+            group_dict = {'Label':'first'}
+            for ii in self.lb.classes_:
+                group_dict[ii] = 'mean'
+
+        self.sample_summary = self.Cell_Pred.groupby(['Patient']).agg(group_dict)
+
+    def Sample_AUC_Curve(self):
+        plt.figure()
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        ROC_DFs = []
+        for ii in self.lb.classes_:
+            y_pred = np.asarray(self.sample_summary[ii])
+            y_test = np.asarray(self.sample_summary['Label'])==ii
+            roc_score = roc_auc_score(y_test, y_pred)
+            fpr, tpr, th = roc_curve(y_test, y_pred)
+            roc_df = pd.DataFrame()
+            roc_df['th'] = th
+            roc_df['fpr'] = fpr
+            roc_df['tpr'] = tpr
+            ROC_DFs.append(roc_df)
+            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (ii, roc_score))
+        plt.legend(loc="lower right")
+        plt.show()
+
+        self.ROC_sample = dict(zip(self.lb.classes_,ROC_DFs))
+
     def Representative_Cells(self,type='APL',num=12,confidence=0.95):
         self.Get_Cell_Predicted(confidence)
         df = deepcopy(self.Cell_Pred)
@@ -475,45 +515,6 @@ class DeepAPL_SC(base):
         self.y_pred = self.predicted
         self.y_test = self.Y
 
-    def Sample_Summary(self):
-        self.Cell_Pred.sort_index(inplace=True)
-        self.Cell_Pred['Patient'] = self.patients
-        if hasattr(self,'predicted_dist'):
-            group_dict = {'Label':'first'}
-            for ii in self.lb.classes_:
-                group_dict[ii] = 'mean'
-                group_dict[ii+'_ci'] = 'mean'
-
-        else:
-            group_dict = {'Label':'first'}
-            for ii in self.lb.classes_:
-                group_dict[ii] = 'mean'
-
-        self.sample_summary = self.Cell_Pred.groupby(['Patient']).agg(group_dict)
-
-    def Sample_AUC_Curve(self):
-        plt.figure()
-        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        ROC_DFs = []
-        for ii in self.lb.classes_:
-            y_pred = np.asarray(self.sample_summary[ii])
-            y_test = np.asarray(self.sample_summary['Label'])==ii
-            roc_score = roc_auc_score(y_test, y_pred)
-            fpr, tpr, th = roc_curve(y_test, y_pred)
-            roc_df = pd.DataFrame()
-            roc_df['th'] = th
-            roc_df['fpr'] = fpr
-            roc_df['tpr'] = tpr
-            ROC_DFs.append(roc_df)
-            plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (ii, roc_score))
-        plt.legend(loc="lower right")
-        plt.show()
-
-        self.ROC_sample = dict(zip(self.lb.classes_,ROC_DFs))
 
 
 
