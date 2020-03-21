@@ -285,7 +285,6 @@ class DeepAPL_SC(base):
                 w.append(w_temp)
 
             self.w = np.vstack(w)
-
             self.predicted[self.test_idx] += self.y_pred
             GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
 
@@ -297,7 +296,7 @@ class DeepAPL_SC(base):
         self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
                     dropout_rate,multisample_dropout_rate)
 
-    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,combine_train_valid=False,train_all=False,
+    def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
                              weight_by_class=False, multisample_dropout_num_masks=64,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                             dropout_rate = 0.0, multisample_dropout_rate = 0.0):
@@ -311,6 +310,8 @@ class DeepAPL_SC(base):
 
         for i in range(0, folds):
             print(i)
+            if seeds is not None:
+                np.random.seed(seeds[i])
             self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
             self._train(batch_size, epochs_min, stop_criterion, stop_criterion_window,
                         dropout_rate, multisample_dropout_rate,iteration=i)
