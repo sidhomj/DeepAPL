@@ -5,11 +5,14 @@ class graph_object(object):
     def __init__(self):
         self.init=0
 
-def Conv_Model(GO,self,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_units=32):
+def Get_Inputs(GO,self):
     # Setup Placeholders
     GO.X = tf.placeholder(tf.float32, [None, self.imgs.shape[1], self.imgs.shape[2], self.imgs.shape[3]], name='Input')
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
+    GO.prob_multisample = tf.placeholder_with_default(0.0, shape=(), name='prob_multisample')
+    GO.Y = tf.placeholder(dtype=tf.float32, shape=[None, self.Y.shape[1]])
 
+def Conv_Model(GO,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_units=32):
     conv = tf.layers.conv2d(GO.X, filters=l1_units, kernel_size=kernel_size, strides=strides, padding='valid', activation=tf.nn.relu)
     conv = tf.layers.dropout(conv,GO.prob)
     GO.l1 = conv
@@ -24,31 +27,53 @@ def Conv_Model(GO,self,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l
     conv = tf.layers.dropout(conv,GO.prob)
     GO.l3 = conv
 
-def Attention_Layer(GO):
-    #method 1
-    GO.w = tf.layers.dense(GO.l3,GO.Y.shape[1])
-    return tf.reduce_mean(GO.w,[1,2])
+def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
+                       rate=0.25,units=12,name='ml_weights',reg=0.0):
+    """
+    Multi-Sample Dropout Layer
 
-    # #method 2
-    # GO.w = tf.layers.dense(GO.l3,GO.Y.shape[1],lambda x: isru(x, l=0, h=1, a=0, b=0))
-    # w = GO.w[:,:,:,:,tf.newaxis]
-    # ft = GO.l3[:,:,:,tf.newaxis,:]
-    # return tf.squeeze(tf.layers.dense(tf.reduce_mean(w*ft,[1,2]),1),-1)
+    Implements Mutli-Sample Dropout layer from "Multi-Sample Dropout for Accelerated Training and Better Generalization"
+    https://arxiv.org/abs/1905.09788
 
+    Inputs
+    ---------------------------------------
+    num_masks: int
+        Number of dropout masks to sample from.
 
-def isru(x, l=-1, h=1, a=None, b=None, name='isru', axis=-1,a_bounds=4,b_bounds=4):
-    if a is None:
-        _a = h - l
-    else:
-        _a = tf.Variable(name=name + '_a', initial_value=np.ones(np.array([_.value for _ in x.shape])[axis]) + a, trainable=True, dtype=tf.float32)
-        _a = 2 ** isru(_a, l=-a_bounds, h=a_bounds)
+    activation: func
+        activation function to use on layer
 
-    if b is None:
-        _b = 1
-    else:
-        _b = tf.Variable(name=name + '_b', initial_value=np.zeros(np.array([_.value for _ in x.shape])[axis]) + b, trainable=True, dtype=tf.float32)
-        _b = (2 ** isru(_b, l=-b_bounds, h=b_bounds))+1
+    use_bias: bool
+        Whether to incorporate bias.
 
-    return l + (((h - l) / 2) * (1 + (x * ((_a + ((x ** 2) ** _b)) ** -(1 / (2 * _b))))))
+    rate: float
+        dropout rate
 
+    units: int
+        Number of output nodes
+
+    name: str
+        Name of layer (tensorflow variable scope)
+
+    reg: float
+        alpha for l1 regulariization on final layer (feature selection)
+
+    Returns
+    ---------------------------------------
+
+    output of layer of dimensionality [?,units]
+
+    """
+    out = []
+    for i in range(num_masks):
+        fc = tf.layers.dropout(X,rate=rate)
+        if i==0:
+            reuse=False
+        else:
+            reuse=True
+
+        with tf.variable_scope(name,reuse=reuse):
+            out.append(tf.layers.dense(fc,units=units,activation=activation,use_bias=use_bias,
+                                       kernel_regularizer=tf.contrib.layers.l1_regularizer(reg)))
+    return tf.reduce_mean(tf.stack(out),0)
 

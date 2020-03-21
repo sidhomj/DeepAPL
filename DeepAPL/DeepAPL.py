@@ -177,35 +177,22 @@ class DeepAPL_SC(base):
                 train.append(np.concatenate((self.train[i],self.valid[i],self.test[i]),0))
             self.train = train
 
-    def Train(self,batch_size = 10, epochs_min = 10,
-              stop_criterion=0.001,stop_criterion_window=10,
-              num_fc_layers=0,num_units=256,weight_by_class=False,drop_out_rate=0.0,iteration=0):
-
+    def _build(self,weight_by_class=False,multisample_dropout_num_masks = 64):
         GO = graph_object()
         with tf.device(self.device):
-            graph_model = tf.Graph()
-            with graph_model.as_default():
-                GO.Y = tf.placeholder(dtype=tf.float32,shape=[None,self.Y.shape[1]])
-                Conv_Model(GO, self)
-                attention=True
-                if attention:
-                    logits = Attention_Layer(GO)
+            GO.graph_model = tf.Graph()
+            with GO.graph_model.as_default():
+                Get_Inputs(GO,self)
+                Conv_Model(GO)
+                if multisample_dropout_num_masks is not None:
+                    GO.w = MultiSample_Dropout(X=GO.l3,
+                                               num_masks=multisample_dropout_num_masks,
+                                               units=GO.Y.shape[1],
+                                               rate=GO.prob_multisample)
                 else:
-                    # fc = tf.concat((tf.reduce_max(GO.l1,axis=[1,2]),
-                    #            tf.reduce_max(GO.l2, axis=[1, 2]),
-                    #            tf.reduce_max(GO.l3, axis=[1, 2]),
-                    #            tf.red#uce_max(GO.l4, axis=[1, 2])),axis=1)
-                    fc = tf.reduce_mean(GO.l3,axis=[1,2])
-                    # WM = tf.exp(tf.layers.dense(GO.l4,GO.l4.shape[-1],activation=tf.nn.sigmoid))
-                    # WM = WM/tf.reduce_sum(WM,axis=[1,2])[:,tf.newaxis,tf.newaxis,:]
-                    # fc = tf.reduce_sum(GO.l4*WM,axis=[1,2])
+                    GO.w = tf.layers.dense(GO.l3, GO.Y.shape[1])
 
-                    for i in range(num_fc_layers):
-                        fc = tf.layers.dense(fc, num_units)
-                        fc = tf.layers.dropout(fc, GO.prob)
-
-                    logits = tf.layers.dense(fc,self.Y.shape[1])
-                    w = tf.trainable_variables()[-2]
+                GO.logits = tf.reduce_mean(GO.w, [1, 2])
 
                 if weight_by_class:
                     class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
@@ -213,19 +200,22 @@ class DeepAPL_SC(base):
                 else:
                     weights = 1
 
-                loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(GO.Y,logits))
+                GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(GO.Y,GO.logits))
 
-                opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+                GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
 
                 with tf.name_scope('Accuracy_Measurements'):
-                    predicted = tf.nn.softmax(logits, name='predicted')
-                    correct_pred = tf.equal(tf.argmax(predicted, 1), tf.argmax(GO.Y, 1))
-                    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+                    GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
-                saver = tf.train.Saver()
+                GO.saver = tf.train.Saver(max_to_keep=None)
 
-                #self.var_names = [GO.w.name,GO.l1.name,GO.l2.name,GO.l3.name]
+        self.GO = GO
 
+    def _train(self,batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
+               dropout_rate=0.0,multisample_dropout_rate=0.0,iteration=0):
+        GO = self.GO
         tf.reset_default_graph()
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
@@ -233,7 +223,7 @@ class DeepAPL_SC(base):
         e=1
         stop_check_list = []
         val_loss_total = []
-        with tf.Session(graph=graph_model, config=config) as sess:
+        with tf.Session(graph=GO.graph_model, config=config) as sess:
             sess.run(tf.global_variables_initializer())
             while training is True:
                 Vars = [self.train[0],self.train[3]]
@@ -241,8 +231,9 @@ class DeepAPL_SC(base):
                 for vars in get_batches(Vars, batch_size=batch_size, random=True):
                     feed_dict = {GO.X: vars[0],
                                  GO.Y: vars[1],
-                                 GO.prob:drop_out_rate}
-                    loss_i,_  = sess.run([loss,opt],feed_dict=feed_dict)
+                                 GO.prob:dropout_rate,
+                                 GO.prob_multisample: multisample_dropout_rate}
+                    loss_i,_  = sess.run([GO.loss,GO.opt],feed_dict=feed_dict)
                     loss_temp.append(loss_i)
 
                 train_loss = np.mean(loss_temp)
@@ -252,7 +243,7 @@ class DeepAPL_SC(base):
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {GO.X: vars[0],
                                  GO.Y: vars[1]}
-                    loss_i  = sess.run(loss,feed_dict=feed_dict)
+                    loss_i  = sess.run(GO.loss,feed_dict=feed_dict)
                     loss_temp.append(loss_i)
 
                 valid_loss = np.mean(loss_temp)
@@ -264,7 +255,7 @@ class DeepAPL_SC(base):
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {GO.X: vars[0],
                                  GO.Y: vars[1]}
-                    loss_i,pred_i  = sess.run([loss,predicted],feed_dict=feed_dict)
+                    loss_i,pred_i  = sess.run([GO.loss,GO.predicted],feed_dict=feed_dict)
                     loss_temp.append(loss_i)
                     pred_temp.append(pred_i)
 
@@ -288,26 +279,64 @@ class DeepAPL_SC(base):
 
                 e +=1
 
+            #Get Activation Maps
             Vars = [self.imgs]
             w = []
-            l1 = []
-            l2 = []
-            l3 = []
             for vars in get_batches(Vars, batch_size=batch_size, random=False):
                 feed_dict = {GO.X: vars[0]}
-                w_temp,l1_temp, l2_temp, l3_temp = sess.run([GO.w,GO.l1,GO.l2,GO.l3],feed_dict=feed_dict)
+                w_temp = sess.run(GO.w,feed_dict=feed_dict)
                 w.append(w_temp)
-                l1.append(l1_temp)
-                l2.append(l2_temp)
-                l3.append(l3_temp)
 
             self.w = np.vstack(w)
-            self.l1 = np.vstack(l1)
-            self.l2 = np.vstack(l2)
-            self.l3 = np.vstack(l3)
 
             self.predicted[self.test_idx] += self.y_pred
-            saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
+            GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
+
+    def Train(self,weight_by_class=False,multisample_dropout_num_masks = 64,
+              batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
+              dropout_rate=0.0,multisample_dropout_rate=0.0):
+        self._build(weight_by_class,multisample_dropout_num_masks)
+        self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
+                    dropout_rate,multisample_dropout_rate)
+
+    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,combine_train_valid=False,train_all=False,
+                             weight_by_class=False, multisample_dropout_num_masks=64,
+                             batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
+                            dropout_rate = 0.0, multisample_dropout_rate = 0.0):
+
+        y_pred = []
+        y_test = []
+        predicted = np.zeros_like(self.predicted)
+        counts = np.zeros_like(self.predicted)
+        self._build(weight_by_class,multisample_dropout_num_masks)
+
+        for i in range(0, folds):
+            print(i)
+            self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
+            self._train(batch_size, epochs_min, stop_criterion, stop_criterion_window,
+                        dropout_rate, multisample_dropout_rate,iteration=i)
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+
+            predicted[self.test_idx] += self.y_pred
+            counts[self.test_idx] += 1
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+            if self.y_test.shape[1] == 2:
+                if i > 0:
+                    y_test2 = np.vstack(y_test)
+                    if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                        print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
+        print('Monte Carlo Simulation Completed')
 
     def Get_Cell_Predicted(self,confidence=0.95):
         df = pd.DataFrame()
@@ -385,100 +414,6 @@ class DeepAPL_SC(base):
             a.set_ylabel('')
         fig.suptitle(type)
         fig.savefig(os.path.join(self.directory_results, type + '_top_act.png'))
-
-    def Get_Kernels(self,type='APL',num=12,top_kernels=3,layer=1):
-        df = pd.DataFrame()
-        df['Files'] = self.files
-        df['Label'] = self.labels
-        for ii,c in enumerate(self.lb.classes_,0):
-            df[c] = self.predicted[:,ii]
-        self.Cell_Pred = deepcopy(df)
-
-        df.reset_index(inplace=True)
-        df.sort_values(by=type,ascending=False,inplace=True)
-        df = df[df['Label']==type]
-        df.set_index('Files',inplace=True)
-
-        idx = np.asarray(df['index'])[0:num]
-
-        if layer == 1:
-            features = self.l1
-        elif layer == 2:
-            features = self.l2
-        elif layer == 3:
-            features = self.l3
-        elif layer == 4:
-            features = self.l4
-
-        features_norm = MinMaxScaler().fit_transform(np.sum(features, axis=(1, 2)))
-        features_sel = features_norm[idx]
-
-        dir = os.path.join(self.directory_results, 'Kernels', type)
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-
-        file_list = [f for f in os.listdir(dir)]
-        [os.remove(os.path.join(dir, f)) for f in file_list]
-
-        for zz, (l, i) in enumerate(zip(features_sel, idx), 0):
-            j = np.flip(np.argsort(l))[0:top_kernels]
-            k = np.transpose(features[i], axes=[2, 0, 1])
-            k = k[j]
-
-            for kk, jj in zip(k, j):
-                plt.figure()
-                plt.imshow(kk, cmap='jet')
-                plt.xticks([])
-                plt.yticks([])
-                plt.xlabel('')
-                plt.ylabel('')
-                plt.savefig(os.path.join(dir, str(zz) + '_' + str(jj)))
-                plt.close()
-
-    def Monte_Carlo_CrossVal(self,folds=5,test_size=0.25,batch_size = 10, epochs_min = 10,
-              stop_criterion=0.001,stop_criterion_window=10,
-              num_fc_layers=0,num_units=256,weight_by_class=False,drop_out_rate=0.0,
-                             combine_train_valid=False,train_all=False):
-
-        y_pred = []
-        y_test = []
-        predicted = np.zeros_like(self.predicted)
-        counts = np.zeros_like(self.predicted)
-
-        out_dir = os.path.join(self.Name,'ensemble_model')
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-
-        for i in range(0, folds):
-            print(i)
-            self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
-            self.Train(batch_size = batch_size, epochs_min = epochs_min,
-              stop_criterion=stop_criterion,stop_criterion_window=stop_criterion_window,
-              num_fc_layers=num_fc_layers,num_units=num_units,weight_by_class=weight_by_class,
-                       drop_out_rate=drop_out_rate,iteration=i)
-
-            y_test.append(self.y_test)
-            y_pred.append(self.y_pred)
-
-            predicted[self.test_idx] += self.y_pred
-            counts[self.test_idx] += 1
-
-            y_test2 = np.vstack(y_test)
-            y_pred2 = np.vstack(y_pred)
-
-            print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
-
-            if self.y_test.shape[1] == 2:
-                if i > 0:
-                    y_test2 = np.vstack(y_test)
-                    if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
-                        print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
-
-
-        self.y_test = np.vstack(y_test)
-        self.y_pred = np.vstack(y_pred)
-        self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
-        print('Monte Carlo Simulation Completed')
 
     def Inference(self,model='model_0',batch_size=100):
         tf.reset_default_graph()
