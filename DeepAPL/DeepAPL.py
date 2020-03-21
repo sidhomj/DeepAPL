@@ -348,8 +348,12 @@ class DeepAPL_SC(base):
 
     def Get_Cell_Predicted(self,confidence=0.95):
         df = pd.DataFrame()
-        df['Files'] = self.files
+        df['Patient'] = self.patients
+        df['Cell_Type'] = self.cell_type
         df['Label'] = self.labels
+        df['Files'] = self.files
+        df['Counts'] = self.counts[:,0]
+
         for ii,c in enumerate(self.lb.classes_,0):
             df[c] = self.predicted[:,ii]
 
@@ -370,8 +374,6 @@ class DeepAPL_SC(base):
 
     def Sample_Summary(self,confidence=0.95):
         self.Get_Cell_Predicted(confidence)
-        self.Cell_Pred.sort_index(inplace=True)
-        self.Cell_Pred['Patient'] = self.patients
         if hasattr(self,'predicted_dist'):
             group_dict = {'Label':'first'}
             for ii in self.lb.classes_:
