@@ -52,6 +52,7 @@ class base(object):
             files = []
             check=0
 
+            pts_exclude = []
             for type in self.classes:
                 pts = os.listdir(os.path.join(directory,type))
                 for pt in pts:
@@ -71,8 +72,7 @@ class base(object):
                         files.append(files_temp)
                     else:
                         check +=1
-                        if check==2:
-                            check=2
+                        pts_exclude.append(pt)
 
 
             imgs = np.vstack(imgs)
@@ -174,11 +174,13 @@ class DeepAPL_SC(base):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def _build(self,weight_by_class=False,multisample_dropout_num_masks = 64):
+    def _build(self,weight_by_class=False,multisample_dropout_num_masks = 64,graph_seed=None):
         GO = graph_object()
         with tf.device(self.device):
             GO.graph_model = tf.Graph()
             with GO.graph_model.as_default():
+                if graph_seed is not None:
+                    tf.set_random_seed(graph_seed)
                 Get_Inputs(GO,self)
                 Conv_Model(GO)
                 if multisample_dropout_num_masks is not None:
@@ -288,16 +290,16 @@ class DeepAPL_SC(base):
             self.predicted[self.test_idx] += self.y_pred
             GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
 
-    def Train(self,weight_by_class=False,multisample_dropout_num_masks = 64,
+    def Train(self,weight_by_class=False,multisample_dropout_num_masks = 64,graph_seed=None,
               batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
               dropout_rate=0.0,multisample_dropout_rate=0.0):
         self._reset_models()
-        self._build(weight_by_class,multisample_dropout_num_masks)
+        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed)
         self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
                     dropout_rate,multisample_dropout_rate)
 
     def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
-                             weight_by_class=False, multisample_dropout_num_masks=64,
+                             weight_by_class=False, multisample_dropout_num_masks=64,graph_seed=None,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                             dropout_rate = 0.0, multisample_dropout_rate = 0.0):
 
@@ -307,7 +309,7 @@ class DeepAPL_SC(base):
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
-        self._build(weight_by_class,multisample_dropout_num_masks)
+        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed)
 
         for i in range(0, folds):
             print(i)
@@ -346,29 +348,36 @@ class DeepAPL_SC(base):
         self.w = np.mean(w_dist,0)
         print('Monte Carlo Simulation Completed')
 
-    def Get_Cell_Predicted(self,confidence=0.95):
-        df = pd.DataFrame()
-        df['Patient'] = self.patients
-        df['Cell_Type'] = self.cell_type
-        df['Label'] = self.labels
-        df['Files'] = self.files
-        df['Counts'] = self.counts[:,0]
+    def Get_Cell_Predicted(self,confidence=0.95,Load_Prev_Data=False):
+        if Load_Prev_Data is False:
+            df = pd.DataFrame()
+            df['Patient'] = self.patients
+            df['Cell_Type'] = self.cell_type
+            df['Label'] = self.labels
+            df['Files'] = self.files
+            df['Counts'] = self.counts[:,0]
 
-        for ii,c in enumerate(self.lb.classes_,0):
-            df[c] = self.predicted[:,ii]
+            for ii,c in enumerate(self.lb.classes_,0):
+                df[c] = self.predicted[:,ii]
 
-        if hasattr(self,'predicted_dist'):
-            for ii, c in enumerate(self.lb.classes_, 0):
-                # compute CI for predictions
-                predicted_dist = self.predicted_dist[:, :, ii]
-                ci = []
-                for d in predicted_dist.T:
-                    ci.append(mean_confidence_interval(d,confidence=confidence))
-                ci = np.vstack(ci)
-                df[c+'_mean']=ci[:,0]
-                df[c+'_low']=ci[:,1]
-                df[c+'_high']=ci[:,2]
-                df[c+'_ci']=ci[:,3]
+            if hasattr(self,'predicted_dist'):
+                for ii, c in enumerate(self.lb.classes_, 0):
+                    # compute CI for predictions
+                    predicted_dist = self.predicted_dist[:, :, ii]
+                    ci = []
+                    for d in predicted_dist.T:
+                        ci.append(mean_confidence_interval(d,confidence=confidence))
+                    ci = np.vstack(ci)
+                    df[c+'_mean']=ci[:,0]
+                    df[c+'_low']=ci[:,1]
+                    df[c+'_high']=ci[:,2]
+                    df[c+'_ci']=ci[:,3]
+
+            with open(os.path.join(self.Name,'cell_preds.pkl'),'wb') as f:
+                pickle.dump(df,f,protocol=4)
+        else:
+            with open(os.path.join(self.Name,'cell_preds.pkl'),'rb') as f:
+                df = pickle.load(f)
 
         self.Cell_Pred = df
 
@@ -410,9 +419,11 @@ class DeepAPL_SC(base):
 
         self.ROC_sample = dict(zip(self.lb.classes_,ROC_DFs))
 
-    def Representative_Cells(self,type='APL',num=12,confidence=0.95):
-        self.Get_Cell_Predicted(confidence)
+    def Representative_Cells(self,type='APL',num=12,confidence=0.95,cell_type=None,Load_Prev_Data=False):
+        self.Get_Cell_Predicted(confidence,Load_Prev_Data=Load_Prev_Data)
         df = deepcopy(self.Cell_Pred)
+        if cell_type is not None:
+            df = df[df['Cell_Type'] == cell_type]
         df.reset_index(inplace=True)
         df.sort_values(by=type,ascending=False,inplace=True)
         df = df[df['Label']==type]
