@@ -338,6 +338,7 @@ class DeepAPL_SC(base):
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
+        self.counts = counts
         w_dist = []
         for w_temp in w:
             w_dist.append(np.expand_dims(w_temp,0))
@@ -367,7 +368,8 @@ class DeepAPL_SC(base):
 
         self.Cell_Pred = df
 
-    def Sample_Summary(self):
+    def Sample_Summary(self,confidence=0.95):
+        self.Get_Cell_Predicted(confidence)
         self.Cell_Pred.sort_index(inplace=True)
         self.Cell_Pred['Patient'] = self.patients
         if hasattr(self,'predicted_dist'):
@@ -375,15 +377,14 @@ class DeepAPL_SC(base):
             for ii in self.lb.classes_:
                 group_dict[ii] = 'mean'
                 group_dict[ii+'_ci'] = 'mean'
-
         else:
             group_dict = {'Label':'first'}
             for ii in self.lb.classes_:
                 group_dict[ii] = 'mean'
-
         self.sample_summary = self.Cell_Pred.groupby(['Patient']).agg(group_dict)
 
     def Sample_AUC_Curve(self):
+        self.Sample_Summary()
         plt.figure()
         plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
         plt.xlim([0.0, 1.0])
