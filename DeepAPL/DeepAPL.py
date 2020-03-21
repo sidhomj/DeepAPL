@@ -5,22 +5,13 @@ import pandas as pd
 import os
 import glob
 import pickle
-import matplotlib.pyplot as plt
 from DeepAPL.functions.utils import *
 from DeepAPL.functions.Layers import *
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MinMaxScaler, StandardScaler
 import tensorflow as tf
 from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix
-import umap
-import matplotlib.patches as mpatches
-import seaborn as sns
-from sklearn.model_selection import KFold
-from sklearn import svm
-from sklearn.ensemble import RandomForestClassifier
-import warnings
-from scipy.spatial.distance import squareform, pdist
 from copy import deepcopy
-import scipy
+import shutil
 
 class base(object):
     def __init__(self,Name='tr_obj',device='/device:GPU:0'):
@@ -177,6 +168,12 @@ class DeepAPL_SC(base):
                 train.append(np.concatenate((self.train[i],self.valid[i],self.test[i]),0))
             self.train = train
 
+    def _reset_models(self):
+        self.models_dir = os.path.join(self.Name,'models')
+        if os.path.exists(self.models_dir):
+            shutil.rmtree(self.models_dir)
+        os.makedirs(self.models_dir)
+
     def _build(self,weight_by_class=False,multisample_dropout_num_masks = 64):
         GO = graph_object()
         with tf.device(self.device):
@@ -295,6 +292,7 @@ class DeepAPL_SC(base):
     def Train(self,weight_by_class=False,multisample_dropout_num_masks = 64,
               batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
               dropout_rate=0.0,multisample_dropout_rate=0.0):
+        self._reset_models()
         self._build(weight_by_class,multisample_dropout_num_masks)
         self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
                     dropout_rate,multisample_dropout_rate)
@@ -308,6 +306,7 @@ class DeepAPL_SC(base):
         y_test = []
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
+        self._reset_models()
         self._build(weight_by_class,multisample_dropout_num_masks)
 
         for i in range(0, folds):
@@ -360,7 +359,8 @@ class DeepAPL_SC(base):
 
         self.Cell_Pred = df
 
-    def Representative_Cells(self,type='APL',num=12):
+    def Representative_Cells(self,type='APL',num=12,confidence=0.95):
+        self.Get_Cell_Predicted(confidence)
         df = deepcopy(self.Cell_Pred)
         df.reset_index(inplace=True)
         df.sort_values(by=type,ascending=False,inplace=True)
