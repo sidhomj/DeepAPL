@@ -188,7 +188,7 @@ class DeepAPL_SC(base):
                                                rate=GO.prob_multisample)
                 else:
                     GO.w = tf.layers.dense(GO.l3, GO.Y.shape[1])
-
+                GO.w = tf.identity(GO.w,'w')
                 GO.logits = tf.reduce_mean(GO.w, [1, 2])
 
                 if weight_by_class:
@@ -303,6 +303,7 @@ class DeepAPL_SC(base):
 
         y_pred = []
         y_test = []
+        w = []
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
@@ -318,6 +319,7 @@ class DeepAPL_SC(base):
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
+            w.append(self.w)
 
             predicted[self.test_idx] += self.y_pred
             counts[self.test_idx] += 1
@@ -336,6 +338,11 @@ class DeepAPL_SC(base):
         self.y_test = np.vstack(y_test)
         self.y_pred = np.vstack(y_pred)
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
+        w_dist = []
+        for w_temp in w:
+            w_dist.append(np.expand_dims(w_temp,0))
+        w_dist = np.vstack(w_dist)
+        self.w = np.mean(w_dist,0)
         print('Monte Carlo Simulation Completed')
 
     def Get_Cell_Predicted(self,confidence=0.95):
@@ -426,7 +433,7 @@ class DeepAPL_SC(base):
             graph = tf.get_default_graph()
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
-            w_var = graph.get_tensor_by_name('dense/BiasAdd:0')
+            w_var = graph.get_tensor_by_name('w:0')
 
             predicted = []
             w = []
