@@ -187,7 +187,8 @@ class DeepAPL_SC(base):
                     GO.w = MultiSample_Dropout(X=GO.l3,
                                                num_masks=multisample_dropout_num_masks,
                                                units=GO.Y.shape[1],
-                                               rate=GO.prob_multisample)
+                                               rate=GO.prob_multisample,
+                                               activation=None)
                 else:
                     GO.w = tf.layers.dense(GO.l3, GO.Y.shape[1])
                 GO.w = tf.identity(GO.w,'w')
