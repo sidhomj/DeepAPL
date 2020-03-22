@@ -33,8 +33,8 @@ for s in samples:
     df_temp['Call_Bin'] = df_temp['Call'].map(bin_dict)
     df_temp['GT_Bin'] = df_temp['GT'].map(bin_dict)
     tn, fp, fn, tp = confusion_matrix(df_temp['GT_Bin'],df_temp['Call_Bin']).ravel()
-    tpr = tp/np.sum(df_temp['GT_Bin'])
-    fpr = fp/(len(df_temp)-np.sum(df_temp['GT_Bin']))
+    tpr = tp/(tp+fn)
+    fpr = fp/(fp+tn)
     tpr_list.append(tpr)
     fpr_list.append(fpr)
 
