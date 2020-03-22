@@ -18,8 +18,9 @@ with open('Cell_Preds.pkl','rb') as f:
 with open('Cell_Masks.pkl','rb') as f:
     DAPL.w = pickle.load(f)
 
-DAPL.Representative_Cells('APL',12,Load_Prev_Data=True)
-DAPL.Representative_Cells('AML',12,Load_Prev_Data=True)
+DAPL.Representative_Cells('AML',48,Load_Prev_Data=True,prob_show=False,show_title=False)
+plt.tight_layout()
+DAPL.Representative_Cells('APL',48,Load_Prev_Data=True,prob_show=False,show_title=False)
 
 cell_types = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
 DAPL.Representative_Cells('APL',12,Load_Prev_Data=True,cell_type = cell_types[4])
