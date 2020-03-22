@@ -381,8 +381,8 @@ class DeepAPL_SC(base):
 
         self.Cell_Pred = df
 
-    def Sample_Summary(self,confidence=0.95):
-        self.Get_Cell_Predicted(confidence)
+    def Sample_Summary(self,confidence=0.95,Load_Prev_Data=False):
+        self.Get_Cell_Predicted(confidence,Load_Prev_Data)
         if hasattr(self,'predicted_dist'):
             group_dict = {'Label':'first'}
             for ii in self.lb.classes_:
