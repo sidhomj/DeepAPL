@@ -420,7 +420,10 @@ class DeepAPL_SC(base):
 
         self.ROC_sample = dict(zip(self.lb.classes_,ROC_DFs))
 
-    def Representative_Cells(self,type='APL',num=12,confidence=0.95,cell_type=None,Load_Prev_Data=False):
+    def Representative_Cells(self,type='APL',num=12,confidence=0.95,cell_type=None,
+                             Load_Prev_Data=False,prob_show=True,prob_font=12,figsize=(12,12),
+                             show_title=True):
+
         self.Get_Cell_Predicted(confidence,Load_Prev_Data=Load_Prev_Data)
         df = deepcopy(self.Cell_Pred)
         if cell_type is not None:
@@ -440,43 +443,49 @@ class DeepAPL_SC(base):
         nrows = int(np.round(np.sqrt(num)))
         ncols = int(num/nrows)
 
-        fig,ax = plt.subplots(nrows=nrows,ncols=ncols)
+        fig,ax = plt.subplots(nrows=nrows,ncols=ncols,figsize=figsize)
         ax = np.ndarray.flatten(ax)
 
 
         for a,i,p,c in zip(ax,idx,prob,ci):
             a.imshow(self.imgs[i])
-            if hasattr(self,'predicted_dist'):
-                a.set_title('Prob = '+str(round(p,3))+', CI='+str(round(c,3)))
-            else:
-                a.set_title('Prob = '+str(round(p,3)))
+            if prob_show:
+                if hasattr(self,'predicted_dist'):
+                    a.set_title('Prob = '+str(round(p,3))+', CI='+str(round(c,3)),fontsize=prob_font)
+                else:
+                    a.set_title('Prob = '+str(round(p,3)),fontsize=prob_font)
             a.set_xticks([])
             a.set_yticks([])
             a.set_xlabel('')
             a.set_ylabel('')
-        fig.suptitle(type)
+        if show_title:
+            fig.suptitle(type)
         fig.savefig(os.path.join(self.directory_results, type + '_top.png'))
+        plt.tight_layout()
 
         w = self.w
         t = self.lb.transform([type])[0]
         w = w[:,:,:,t]
 
-        fig,ax = plt.subplots(nrows=nrows,ncols=ncols)
+        fig,ax = plt.subplots(nrows=nrows,ncols=ncols,figsize=figsize)
         ax = np.ndarray.flatten(ax)
 
         for a,i,p,c in zip(ax,idx,prob,ci):
             a.imshow(self.imgs[i])
             a.imshow(w[i], alpha=0.65, cmap='jet')
-            if hasattr(self,'predicted_dist'):
-                a.set_title('Prob = '+str(round(p,3))+', CI='+str(round(c,3)))
-            else:
-                a.set_title('Prob = '+str(round(p,3)))
+            if prob_show:
+                if hasattr(self,'predicted_dist'):
+                    a.set_title('Prob = '+str(round(p,3))+', CI='+str(round(c,3)),fontsize=prob_font)
+                else:
+                    a.set_title('Prob = '+str(round(p,3)),fontsize=prob_font)
             a.set_xticks([])
             a.set_yticks([])
             a.set_xlabel('')
             a.set_ylabel('')
-        fig.suptitle(type)
+        if show_title:
+            fig.suptitle(type)
         fig.savefig(os.path.join(self.directory_results, type + '_top_act.png'))
+        plt.tight_layout()
 
     def Inference(self,model='model_0',batch_size=100):
         tf.reset_default_graph()
