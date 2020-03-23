@@ -11,6 +11,7 @@ def Get_Inputs(GO,self):
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.prob_multisample = tf.placeholder_with_default(0.0, shape=(), name='prob_multisample')
     GO.Y = tf.placeholder(dtype=tf.float32, shape=[None, self.Y.shape[1]])
+    GO.class_weights = tf.placeholder(dtype=tf.float32, shape=[1, self.Y.shape[1]])
 
 def Conv_Model(GO,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_units=32):
     conv = tf.layers.conv2d(GO.X, filters=l1_units, kernel_size=kernel_size, strides=strides, padding='valid', activation=tf.nn.relu)

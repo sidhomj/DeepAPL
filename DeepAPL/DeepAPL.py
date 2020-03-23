@@ -50,9 +50,11 @@ class base(object):
             patients = []
             cell_type = []
             files = []
+            smears = []
             check=0
 
             pts_exclude = []
+            pts_exclude_label = []
             for type in self.classes:
                 pts = os.listdir(os.path.join(directory,type))
                 for pt in pts:
@@ -60,26 +62,33 @@ class base(object):
                     list_dir = sorted(os.listdir(sub_dir))
                     if 'Signed slides' in list_dir:
                         imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir,sample,include_cell_types,exclude_cell_types)
+                        smear = None
                     else:
                         sub_dir_2 = os.path.join(sub_dir,list_dir[0])
                         imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir_2,sample,include_cell_types,exclude_cell_types)
+                        smear = sub_dir_2.split('/')[-1]
 
                     if not isinstance(imgs_temp,list):
                         imgs.append(np.squeeze(imgs_temp,0))
                         labels.append([type]*imgs_temp.shape[1])
                         patients.append([pt]*imgs_temp.shape[1])
+                        smears.append([smear]*imgs_temp.shape[1])
                         cell_type.append(cell_type_temp)
                         files.append(files_temp)
                     else:
                         check +=1
                         pts_exclude.append(pt)
+                        pts_exclude_label.append(type)
 
 
+            self.pts_exclude = pts_exclude
+            self.pts_exclude_label = pts_exclude_label
             imgs = np.vstack(imgs)
             labels = np.hstack(labels)
             patients = np.hstack(patients)
             cell_type = np.hstack(cell_type)
             files = np.hstack(files)
+            smears = np.hstack(smears)
 
             Y = self.lb.transform(labels)
             OH = OneHotEncoder(sparse=False)
@@ -88,14 +97,14 @@ class base(object):
             if save_data is True:
                 np.save(os.path.join(self.Name, 'imgs'), imgs)
                 with open(os.path.join(self.Name, 'data.pkl'), 'wb') as f:
-                    pickle.dump([Y,labels,patients,cell_type,files,self.lb], f, protocol=4)
+                    pickle.dump([Y,labels,patients,cell_type,files,smears,self.lb], f, protocol=4)
 
 
         else:
 
             imgs = np.load(os.path.join(self.Name, 'imgs.npy'))
             with open(os.path.join(self.Name,'data.pkl'),'rb') as f:
-                Y,labels,patients,cell_type,files,self.lb = pickle.load(f)
+                Y,labels,patients,cell_type,files,smears,self.lb = pickle.load(f)
 
 
         self.imgs = imgs
@@ -103,6 +112,7 @@ class base(object):
         self.patients = patients
         self.cell_type = cell_type
         self.files = files
+        self.smears = smears
         self.Y = Y
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
 
@@ -195,8 +205,7 @@ class DeepAPL_SC(base):
                 GO.logits = tf.reduce_mean(GO.w, [1, 2])
 
                 if weight_by_class:
-                    class_weights = tf.constant([(1 / (np.sum(self.Y, 0) / np.sum(self.Y))).tolist()])
-                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), class_weights, transpose_b=True), axis=1)
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), GO.class_weights, transpose_b=True), axis=1)
                 else:
                     weights = 1
 
@@ -223,6 +232,8 @@ class DeepAPL_SC(base):
         e=1
         stop_check_list = []
         val_loss_total = []
+        class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+
         with tf.Session(graph=GO.graph_model, config=config) as sess:
             sess.run(tf.global_variables_initializer())
             while training is True:
@@ -232,7 +243,8 @@ class DeepAPL_SC(base):
                     feed_dict = {GO.X: vars[0],
                                  GO.Y: vars[1],
                                  GO.prob:dropout_rate,
-                                 GO.prob_multisample: multisample_dropout_rate}
+                                 GO.prob_multisample: multisample_dropout_rate,
+                                 GO.class_weights: class_weights}
                     loss_i,_  = sess.run([GO.loss,GO.opt],feed_dict=feed_dict)
                     loss_temp.append(loss_i)
 
@@ -242,7 +254,8 @@ class DeepAPL_SC(base):
                 loss_temp = []
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {GO.X: vars[0],
-                                 GO.Y: vars[1]}
+                                 GO.Y: vars[1],
+                                 GO.class_weights: class_weights}
                     loss_i  = sess.run(GO.loss,feed_dict=feed_dict)
                     loss_temp.append(loss_i)
 
@@ -254,7 +267,8 @@ class DeepAPL_SC(base):
                 pred_temp = []
                 for vars in get_batches(Vars, batch_size=batch_size, random=False):
                     feed_dict = {GO.X: vars[0],
-                                 GO.Y: vars[1]}
+                                 GO.Y: vars[1],
+                                 GO.class_weights: class_weights}
                     loss_i,pred_i  = sess.run([GO.loss,GO.predicted],feed_dict=feed_dict)
                     loss_temp.append(loss_i)
                     pred_temp.append(pred_i)
