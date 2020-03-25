@@ -15,18 +15,19 @@ def Get_Inputs(GO,self):
 
 def Conv_Model(GO,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_units=32):
     conv = tf.layers.conv2d(GO.X, filters=l1_units, kernel_size=kernel_size, strides=strides, padding='valid', activation=tf.nn.relu)
-    conv = tf.layers.dropout(conv,GO.prob)
     GO.l1 = conv
+    conv = tf.layers.dropout(conv,GO.prob)
 
     conv = tf.layers.conv2d(conv, filters=l2_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
-    conv = tf.layers.dropout(conv,GO.prob)
     GO.l2 = conv
+    conv = tf.layers.dropout(conv,GO.prob)
 
     kernel_size = (4,4)
     strides = (1,1)
     conv = tf.layers.conv2d(conv, filters=l3_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
-    conv = tf.layers.dropout(conv,GO.prob)
     GO.l3 = conv
+    conv = tf.layers.dropout(conv,GO.prob)
+    return conv
 
 def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
                        rate=0.25,units=12,name='ml_weights',reg=0.0):

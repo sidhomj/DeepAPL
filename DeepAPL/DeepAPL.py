@@ -192,15 +192,15 @@ class DeepAPL_SC(base):
                 if graph_seed is not None:
                     tf.set_random_seed(graph_seed)
                 Get_Inputs(GO,self)
-                Conv_Model(GO)
+                Features = Conv_Model(GO)
                 if multisample_dropout_num_masks is not None:
-                    GO.w = MultiSample_Dropout(X=GO.l3,
+                    GO.w = MultiSample_Dropout(X=Features,
                                                num_masks=multisample_dropout_num_masks,
                                                units=GO.Y.shape[1],
                                                rate=GO.prob_multisample,
                                                activation=None)
                 else:
-                    GO.w = tf.layers.dense(GO.l3, GO.Y.shape[1])
+                    GO.w = tf.layers.dense(Features, GO.Y.shape[1])
                 GO.w = tf.identity(GO.w,'w')
                 GO.logits = tf.reduce_mean(GO.w, [1, 2])
 
@@ -512,6 +512,8 @@ class DeepAPL_SC(base):
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
             w_var = graph.get_tensor_by_name('w:0')
+            'conv2d/Relu:0'
+
 
             predicted = []
             w = []

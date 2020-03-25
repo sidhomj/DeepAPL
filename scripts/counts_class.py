@@ -6,13 +6,18 @@ import pickle
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve,roc_auc_score
 import seaborn as sns
-gpu = 1
+from scipy.stats import ttest_ind, mannwhitneyu
+import matplotlib
+matplotlib.rc('font', family='Times New Roman')
+# del matplotlib.font_manager.weight_dict['roman']
+# matplotlib.font_manager._rebuild()
 
+gpu = 1
 classes = ['AML','APL']
 cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
 device = '/device:GPU:'+ str(gpu)
 DAPL = DeepAPL_SC('Blast_S_'+str(gpu),device=device)
-DAPL.Import_Data(directory='../Data/All', Load_Prev_Data=False, classes=classes,
+DAPL.Import_Data(directory='../Data/All', Load_Prev_Data=True, classes=classes,
                  include_cell_types=cell_types)
 
 df = pd.DataFrame()
@@ -30,27 +35,27 @@ df_add.set_index('Patient',inplace=True)
 df_samples = pd.concat([agg,df_add])
 bin_dict = {'AML':0,'APL':1}
 df_samples['Label_Bin'] = df_samples['Label'].map(bin_dict)
+color_dict = {'AML':'b','APL':'r'}
+df_samples['color'] = df_samples['Label'].map(color_dict)
 
 fig,ax = plt.subplots()
-sns.swarmplot(data=df_samples,x='Label',y='n',ax=ax)
-plt.ylabel('Number of Cells per Sample',fontsize=16)
+sns.boxplot(data=df_samples,x='Label',y='n',ax=ax,palette=sns.color_palette(['blue', 'red']))
+for patch in ax.artists:
+    r, g, b, a = patch.get_facecolor()
+    patch.set_facecolor((r, g, b, 0.0))
+sns.swarmplot(data=df_samples,x='Label',y='n',ax=ax,palette=sns.color_palette(['blue', 'red']))
+plt.ylabel('Number of Cells per Sample',fontsize=24)
 plt.xlabel('')
 ax.tick_params(axis="x", labelsize=16)
+ax.tick_params(axis='y', labelsize=16)
 plt.tight_layout()
 plt.xticks()
 
+
+#stat test
 np.mean(df_samples['n'][df_samples['Label']=='APL'])
-from scipy.stats import ttest_ind
-ttest_ind(df_samples['n'][df_samples['Label']=='APL'],
+mannwhitneyu(df_samples['n'][df_samples['Label']=='APL'],
           df_samples['n'][df_samples['Label']=='AML'])
 
-from sklearn.linear_model import LogisticRegression
 
-LR = LogisticRegression()
-x = np.array(df_samples['n']).reshape(-1,1)
-y = np.array(df_samples['Label_Bin'])
-LR.fit(x,y)
-pred = LR.predict_proba(np.array(df_samples['n']).reshape(-1,1))
-plt.scatter(x,pred[:,1])
-34/85
 
