@@ -18,7 +18,7 @@ DAPL = DeepAPL_SC('blast_class',device=device)
 DAPL.Import_Data(directory='../Data/All', Load_Prev_Data=False, classes=classes,
                  include_cell_types=cell_types)
 
-folds = 100
+folds = 5
 seeds = np.array(range(folds))
 epochs_min = 25
 graph_seed = 0

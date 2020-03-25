@@ -512,19 +512,28 @@ class DeepAPL_SC(base):
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
             w_var = graph.get_tensor_by_name('w:0')
-            'conv2d/Relu:0'
-
+            l1 = graph.get_tensor_by_name('l1:0')
+            l2 = graph.get_tensor_by_name('l2:0')
+            l3 = graph.get_tensor_by_name('l3:0')
 
             predicted = []
             w = []
+            l1_list,l2_list,l3_list = []
             for x in get_batches([self.imgs], batch_size=batch_size, random=False):
                 feed_dict = {X: x[0]}
                 predicted_i,w_temp = sess.run([pred,w_var],feed_dict=feed_dict)
                 predicted.append(predicted_i)
                 w.append(w_temp)
+                l1_i, l2_i, l3_i = sess.run([l1,l2,l3],feed_dict=feed_dict)
+                l1_list.append(l1_i)
+                l2_list.append(l2_i)
+                l3_list.append(l3_i)
 
             self.predicted = np.vstack(predicted)
             self.w = np.vstack(w)
+            self.l1 = np.vstack(l1_list)
+            self.l2 = np.vstack(l2_list)
+            self.l3 = np.vstack(l3_list)
 
             self.y_pred = self.predicted
             self.y_test = self.Y
