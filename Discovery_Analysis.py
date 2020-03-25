@@ -14,10 +14,17 @@ classes = ['AML','APL']
 cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
 DAPL = DeepAPL_SC('Blast_S',device='/device:GPU:1')
 DAPL.Import_Data(directory='Data/Discovery', Load_Prev_Data=True, classes=classes,
-                 include_cell_types=cell_types)
-#
-DAPL.Monte_Carlo_CrossVal(folds=100,epochs_min=25,stop_criterion=0.25,test_size=0.25,
-                          drop_out_rate=0.5,combine_train_valid=False,weight_by_class=False)
+                 include_cell_types=cell_types,sample=None)
+DAPL.Monte_Carlo_CrossVal(folds=10,epochs_min=10,stop_criterion=0.25,test_size=0.25,
+                          dropout_rate=0.5,multisample_dropout_rate=0.0)
+DAPL.Representative_Cells('AML')
+
+import pickle
+# with open('pred_cell_class.pkl','wb') as f:
+#     pickle.dump([DAPL.y_pred,DAPL.y_test,DAPL.predicted,DAPL.w],f,protocol=4)
+
+with open('pred_cell_class.pkl','rb') as f:
+    DAPL.y_pred,DAPL.y_test,DAPL.predicted = pickle.load(f)
 
 #Cell Classification Accuracy
 DAPL.AUC_Curve()
@@ -26,5 +33,3 @@ DAPL.AUC_Curve()
 DAPL.Get_Cell_Predicted()
 DAPL.Sample_Summary()
 DAPL.Sample_AUC_Curve()
-
-DAPL.Get_Kernels()
