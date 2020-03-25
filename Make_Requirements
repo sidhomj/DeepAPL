@@ -1,0 +1,2 @@
+#!/bin/bash
+ ./deepapl/bin/python3.6 -m pip freeze > requirements.txt
