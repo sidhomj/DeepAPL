@@ -5,6 +5,8 @@ import glob
 import matplotlib.pyplot as plt
 import pickle
 
+pt_drop = False
+
 key_df = pd.read_csv('../Data/key.csv',dtype=object)
 key_dict = dict(zip(key_df['Test_ID'],key_df['JHH_ID']))
 
@@ -28,7 +30,8 @@ fpr_list = []
 for s in samples:
     df_temp = pd.read_csv(s,dtype=object)
     df_temp['JH'] = df_temp['Test_ID'].map(key_dict)
-    df_temp = df_temp[df_temp['JH'] != 'JH97316053']
+    if pt_drop:
+        df_temp = df_temp[df_temp['JH'] != 'JH97316053']
     df_temp['GT'] = df_temp['JH'].map(label_dict)
     df_temp['Call_Bin'] = df_temp['Call'].map(bin_dict)
     df_temp['GT_Bin'] = df_temp['GT'].map(bin_dict)
@@ -38,8 +41,13 @@ for s in samples:
     tpr_list.append(tpr)
     fpr_list.append(fpr)
 
-with open('Cell_Preds.pkl','rb') as f:
+with open('Cell_Preds_CW.pkl','rb') as f:
     cell_preds = pickle.load(f)
+
+prior_apl = np.sum(cell_preds['Label']=='APL')/len(cell_preds)
+prior_aml = 1 - prior_apl
+prior_apl = 0.5
+prior_aml = 1 - prior_apl
 
 keep = np.array(df_temp['JH'])
 cell_preds = cell_preds[cell_preds['Patient'].isin(keep)]
@@ -51,13 +59,14 @@ sample_preds = cell_preds.groupby(['Patient']).agg(group_dict)
 df_add = pd.DataFrame()
 df_add['Patient'] = ['JH97316053']
 df_add['Label'] = 'APL'
-df_add['AML'] = 1.0
-df_add['APL'] = 0.0
+df_add['AML'] = prior_aml
+df_add['APL'] = prior_apl
 df_add.set_index('Patient',inplace=True)
-# sample_preds = pd.concat([sample_preds,df_add])
+if not pt_drop:
+    sample_preds = pd.concat([sample_preds,df_add])
 
 plt.figure()
-# plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+# plt.plot([0, 1], [0, 1], color='navy',e lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate',fontsize=16)
