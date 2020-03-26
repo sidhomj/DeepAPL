@@ -518,7 +518,9 @@ class DeepAPL_SC(base):
 
             predicted = []
             w = []
-            l1_list,l2_list,l3_list = []
+            l1_list = []
+            l2_list = []
+            l3_list = []
             for x in get_batches([self.imgs], batch_size=batch_size, random=False):
                 feed_dict = {X: x[0]}
                 predicted_i,w_temp = sess.run([pred,w_var],feed_dict=feed_dict)

@@ -25,7 +25,7 @@ def Conv_Model(GO,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_uni
     kernel_size = (4,4)
     strides = (1,1)
     conv = tf.layers.conv2d(conv, filters=l3_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
-    GO.l3 = tf.identity(conv,'l2')
+    GO.l3 = tf.identity(conv,'l3')
     conv = tf.layers.dropout(conv,GO.prob)
     return conv
 

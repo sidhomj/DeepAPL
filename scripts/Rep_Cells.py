@@ -10,12 +10,14 @@ gpu = 1
 classes = ['AML','APL']
 cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
 device = '/device:GPU:'+ str(gpu)
-DAPL = DeepAPL_SC('Blast_S_'+str(gpu),device=device)
+DAPL = DeepAPL_SC('blast_class',device=device)
 DAPL.Import_Data(directory='Data/All', Load_Prev_Data=True, classes=classes,
                  include_cell_types=cell_types)
-with open('Cell_Preds_CW.pkl','rb') as f:
+pred_file = 'Cell_Preds.pkl'
+mask_file = 'Cell_Masks.pkl'
+with open(pred_file,'rb') as f:
     DAPL.Cell_Pred = pickle.load(f)
-with open('Cell_Masks_CW.pkl','rb') as f:
+with open(mask_file,'rb') as f:
     DAPL.w = pickle.load(f)
 
 DAPL.Representative_Cells('APL',12,Load_Prev_Data=True,prob_show=True,show_title=True)
