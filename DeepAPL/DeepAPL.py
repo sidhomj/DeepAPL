@@ -396,8 +396,7 @@ class DeepAPL_SC(base):
 
         self.Cell_Pred = df
 
-    def Sample_Summary(self,confidence=0.95,Load_Prev_Data=False):
-        self.Get_Cell_Predicted(confidence,Load_Prev_Data)
+    def Sample_Summary(self):
         if hasattr(self,'predicted_dist'):
             group_dict = {'Label':'first'}
             for ii in self.lb.classes_:
@@ -434,11 +433,9 @@ class DeepAPL_SC(base):
 
         self.ROC_sample = dict(zip(self.lb.classes_,ROC_DFs))
 
-    def Representative_Cells(self,type='APL',num=12,confidence=0.95,cell_type=None,
-                             Load_Prev_Data=False,prob_show=True,prob_font=12,figsize=(12,12),
+    def Representative_Cells(self,type='APL',num=12,cell_type=None,
+                             prob_show=True,prob_font=12,figsize=(12,12),
                              show_title=True):
-
-        self.Get_Cell_Predicted(confidence,Load_Prev_Data=Load_Prev_Data)
         df = deepcopy(self.Cell_Pred)
         if cell_type is not None:
             df = df[df['Cell_Type'] == cell_type]
