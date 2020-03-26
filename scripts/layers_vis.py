@@ -30,39 +30,29 @@ with open(mask_file,'rb') as f:
 
 DAPL.Cell_Pred.sort_values(by='AML',inplace=True,ascending=False)
 img_sel = DAPL.Cell_Pred.index[0]
-plt.imshow(DAPL.imgs[img_sel])
-plt.xticks([])
-plt.yticks([])
-plt.savefig('../results/arch/input.png')
+
+def save_img(img,path,cmap=None):
+    fig,ax = plt.subplots(figsize=(5,5))
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    fig.subplots_adjust(left=0,right=1,bottom=0,top=1)
+    ax.imshow(img,cmap=cmap)
+    fig.savefig(path)
+    plt.close()
+
+save_img(DAPL.imgs[img_sel],'../results/arch/input.png')
 
 for f in range(DAPL.l1.shape[-1]):
-    plt.figure()
-    plt.imshow(DAPL.l1[img_sel][:,:,f],cmap='jet')
-    plt.xticks([])
-    plt.yticks([])
-    plt.savefig('../results/arch/l1/'+str(f)+'.png')
-    plt.close()
+    save_img(DAPL.l1[img_sel][:,:,f],'../results/arch/l1/'+str(f)+'.png',cmap='jet')
 
 for f in range(DAPL.l2.shape[-1]):
-    plt.figure()
-    plt.imshow(DAPL.l2[img_sel][:,:,f],cmap='jet')
-    plt.xticks([])
-    plt.yticks([])
-    plt.savefig('../results/arch/l2/'+str(f)+'.png')
-    plt.close()
+    save_img(DAPL.l2[img_sel][:,:,f],'../results/arch/l2/'+str(f)+'.png',cmap='jet')
 
 for f in range(DAPL.l3.shape[-1]):
-    plt.figure()
-    plt.imshow(DAPL.l3[img_sel][:,:,f],cmap='jet')
-    plt.xticks([])
-    plt.yticks([])
-    plt.savefig('../results/arch/l3/'+str(f)+'.png')
-    plt.close()
+    save_img(DAPL.l3[img_sel][:,:,f],'../results/arch/l3/'+str(f)+'.png',cmap='jet')
 
 for f in range(DAPL.w.shape[-1]):
-    plt.figure()
-    plt.imshow(DAPL.w[img_sel][:,:,f],cmap='jet')
-    plt.xticks([])
-    plt.yticks([])
-    plt.savefig('../results/arch/output/'+str(f)+'.png')
-    plt.close()
+    save_img(DAPL.w[img_sel][:,:,f],'../results/arch/output/'+str(f)+'.png',cmap='jet')
+
