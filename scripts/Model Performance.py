@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve,roc_auc_score
 import seaborn as sns
 import matplotlib
+import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
@@ -97,9 +98,36 @@ roc_score = roc_auc_score(y_test,y_pred)
 fpr, tpr, th = roc_curve(y_test, y_pred)
 id = 'Pts >= 10 cells'
 plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='green')
-plt.legend(loc="upper left",prop={'size':12},frameon=False)
+
+df_promy = pd.DataFrame()
+df_promy['Patient'] = DAPL.patients
+df_promy['Cell Type'] = DAPL.cell_type
+df_promy['Cell Type'].value_counts()
+df_promy['Pro'] =  df_promy['Cell Type'] == 'Promyelocyte'
+df_promy_agg = df_promy.groupby(['Patient']).agg({'Pro':'sum'})
+
+df_promy_tc = df_promy['Patient'].value_counts().to_frame()
+df_pro = pd.concat([df_promy_agg,df_promy_tc],axis=1)
+
+label_dict = pd.DataFrame()
+label_dict['Patient'] = DAPL.patients
+label_dict['Label'] = DAPL.labels
+label_dict.drop_duplicates(inplace=True)
+label_dict = dict(zip(label_dict['Patient'],label_dict['Label']))
+df_pro['Label'] = df_pro.index.map(label_dict)
+bin_dict = {'AML':0,'APL':1}
+df_pro['Label_Bin'] = df_pro['Label'].map(bin_dict)
+df_pro['Pro_Prop'] = df_pro['Pro']/df_pro['Patient']
+
+y_test = np.array(df_pro['Label_Bin'])
+y_pred = np.array(df_pro['Pro_Prop'])
+roc_score = roc_auc_score(y_test,y_pred)
+fpr, tpr, th = roc_curve(y_test, y_pred)
+id = 'Proportion of Promyelocytes'
+plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='blue')
+
+plt.legend(loc="lower right",prop={'size':12},frameon=False)
 plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-
