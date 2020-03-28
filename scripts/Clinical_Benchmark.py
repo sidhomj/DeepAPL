@@ -41,7 +41,7 @@ for s in samples:
     tpr_list.append(tpr)
     fpr_list.append(fpr)
 
-with open('Cell_Preds_CW.pkl','rb') as f:
+with open('Cell_Preds.pkl','rb') as f:
     cell_preds = pickle.load(f)
 
 prior_apl = np.sum(cell_preds['Label']=='APL')/len(cell_preds)
@@ -69,8 +69,8 @@ plt.figure()
 # plt.plot([0, 1], [0, 1], color='navy',e lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate',fontsize=16)
-plt.ylabel('True Positive Rate',fontsize=16)
+plt.xlabel('False Positive Rate',fontsize=24)
+plt.ylabel('True Positive Rate',fontsize=24)
 y_pred = np.asarray(sample_preds['APL'])
 y_test = np.asarray(sample_preds['Label']) == 'APL'
 roc_score = roc_auc_score(y_test, y_pred)
@@ -78,5 +78,7 @@ fpr, tpr, th = roc_curve(y_test, y_pred)
 ii = 'CNN'
 plt.plot(fpr, tpr, lw=2, label='%s (area = %0.4f)' % (ii, roc_score),zorder=1,c='grey')
 plt.scatter(fpr_list,tpr_list,marker='*',s=100,c='r',linewidths=5,zorder=2,label='Clinicians')
-plt.legend(loc="lower right")
+plt.legend(loc="lower right",prop={'size':16})
+plt.xticks(fontsize=16)
+plt.yticks(fontsize=16)
 plt.tight_layout()

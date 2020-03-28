@@ -16,8 +16,8 @@ gpu = 1
 classes = ['AML','APL']
 cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
 device = '/device:GPU:'+ str(gpu)
-DAPL = DeepAPL_SC('Blast_S_'+str(gpu),device=device)
-DAPL.Import_Data(directory='../Data/All', Load_Prev_Data=True, classes=classes,
+DAPL = DeepAPL_SC('blast_class',device=device)
+DAPL.Import_Data(directory='../Data/All', Load_Prev_Data=False, classes=classes,
                  include_cell_types=cell_types)
 
 df = pd.DataFrame()
@@ -39,17 +39,19 @@ color_dict = {'AML':'b','APL':'r'}
 df_samples['color'] = df_samples['Label'].map(color_dict)
 
 fig,ax = plt.subplots()
-sns.boxplot(data=df_samples,x='Label',y='n',ax=ax,palette=sns.color_palette(['blue', 'red']))
+sns.boxplot(data=df_samples,x='Label',y='n',ax=ax,palette=sns.color_palette(['blue', 'red']),order=['AML','APL'])
 for patch in ax.artists:
     r, g, b, a = patch.get_facecolor()
     patch.set_facecolor((r, g, b, 0.0))
-sns.swarmplot(data=df_samples,x='Label',y='n',ax=ax,palette=sns.color_palette(['blue', 'red']))
+sns.swarmplot(data=df_samples,x='Label',y='n',ax=ax,palette=sns.color_palette(['blue', 'red']),order=['AML','APL'])
 plt.ylabel('Number of Cells per Sample',fontsize=24)
 plt.xlabel('')
-ax.tick_params(axis="x", labelsize=16)
+ax.tick_params(axis="x", labelsize=24)
 ax.tick_params(axis='y', labelsize=16)
 plt.tight_layout()
 plt.xticks()
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
 
 
 #stat test
