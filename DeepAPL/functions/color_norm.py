@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import cv2
 from sklearn.decomposition import NMF
-from glob import glob
+import glob
 
 class ColorNormStains:
     @staticmethod
@@ -43,7 +43,7 @@ class ColorNormStains:
 
     def load_img_files(self, path, extension='.jpg'):
         # load images using glob recursively matching extension
-        self.img_names = glob(path + '/**/*' + extension, recursive=True)
+        self.img_names = glob.glob(path + '/**/*' + extension, recursive=True)
         # receiving list of img, this allows from variable size tiles
         img_data = list()
         for img_file in self.img_names:
@@ -82,7 +82,7 @@ class ColorNormStains:
         self.nmf = NMF(n_components=n_components, init='custom')
         self.nmf.get_params()
         # sampling equalized histogram over the distribution of the signal
-        idx = np.random.choice(OD_total.shape[0], n_sampling, replace=False, p=corrective_weights)
+        idx = np.random.choice(OD_total.shape[0], n_sampling, replace=True, p=corrective_weights)
         self.nmf.fit(self.OD_rgb[idx], W=np.maximum(np.matmul(self.OD_rgb[idx], np.linalg.pinv(self.target_components_od['Wright-Giemsa'])), 0), H=self.target_components_od['Wright-Giemsa'])
         # save the fit optical density component matrices
         self.fit_components = self.nmf.components_
