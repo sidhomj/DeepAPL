@@ -14,7 +14,7 @@ from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_sco
 import scipy.stats
 from DeepAPL.functions.color_norm import *
 
-def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,load_images=True):
+def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,load_images=True,color_norm=True):
 
     sub_dir_2 = os.path.join(sub_dir,'Signed slides')
     type_list = os.listdir(sub_dir_2)
@@ -48,11 +48,12 @@ def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,lo
     cell_type_raw = cell_type
 
     if len(imgs) != 0:
-        # normalize imgs
-        cns = ColorNormStains()
-        cns.process_img_data(imgs)
-        imgs = cns.Get_Normed_Data()
-        imgs = np.vstack(imgs)
+        if color_norm:
+            # normalize imgs
+            cns = ColorNormStains()
+            cns.process_img_data(imgs)
+            imgs = cns.Get_Normed_Data()
+        imgs = np.stack(imgs,axis=0)
 
         if sample is not None:
             if len(imgs) > sample:

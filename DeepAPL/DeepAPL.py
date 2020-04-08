@@ -34,7 +34,8 @@ class base(object):
             os.makedirs(os.path.join(self.Name,'models'))
 
     def Import_Data(self,directory,Load_Prev_Data=False,classes=None,sample=None,
-                    include_cell_types=None,exclude_cell_types=None,save_data=True):
+                    include_cell_types=None,exclude_cell_types=None,save_data=True,
+                    color_norm=True):
         if Load_Prev_Data is False:
 
             if classes is None:
@@ -52,6 +53,7 @@ class base(object):
             files = []
             smears = []
             check=0
+            load_images = True
 
             pts_exclude = []
             pts_exclude_label = []
@@ -61,11 +63,13 @@ class base(object):
                     sub_dir = os.path.join(directory,type,pt)
                     list_dir = sorted(os.listdir(sub_dir))
                     if 'Signed slides' in list_dir:
-                        imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir,sample,include_cell_types,exclude_cell_types)
+                        imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir,sample,
+                                                                                            include_cell_types,exclude_cell_types,load_images,color_norm)
                         smear = None
                     else:
                         sub_dir_2 = os.path.join(sub_dir,list_dir[0])
-                        imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir_2,sample,include_cell_types,exclude_cell_types)
+                        imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir_2,sample,
+                                                                                            include_cell_types,exclude_cell_types,load_images,color_norm)
                         smear = sub_dir_2.split('/')[-1]
 
                     if not isinstance(imgs_temp,list):
