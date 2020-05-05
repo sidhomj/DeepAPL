@@ -70,6 +70,7 @@ class ColorNormStains:
     def fit(self, n_components=3, n_sampling=250000, init=None):
         # get background intensity values per channel
         I_0 = self.get_background_level(self.I_rgb, threshold=0.8, percentile=0.5)
+        self.I_0 = I_0
 
         # convert from light intensity to optical density and control for background
         self.OD_rgb = -np.log(np.maximum(np.minimum(self.I_rgb / I_0, 1), 1e-3))
@@ -113,8 +114,6 @@ class ColorNormStains:
         self.fit()
         self.transform()
         self.reconstruct_rgb('Wright-Giemsa')
-        if nmf is False:
-            out = [self.I_rgb_recon[self.pixel_tile == i].reshape(self.img_shapes[i]) for i in range(len(self.img_shapes))]
-        else:
-            out = [self.OD_nmf[self.pixel_tile == i].reshape(self.img_shapes[i]) for i in range(len(self.img_shapes))]
-        return out
+        out = [self.I_rgb_recon[self.pixel_tile == i].reshape(self.img_shapes[i]) for i in range(len(self.img_shapes))]
+        out_nmf = [self.OD_nmf[self.pixel_tile == i].reshape(self.img_shapes[i]) for i in range(len(self.img_shapes))]
+        return out, out_nmf

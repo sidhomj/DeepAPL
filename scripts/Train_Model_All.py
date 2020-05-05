@@ -13,9 +13,9 @@ classes = ['AML','APL']
 
 device = '/device:GPU:'+ str(gpu)
 DAPL = DeepAPL_SC('all_class',device=device)
-DAPL.Import_Data(directory='../Data/Final/Discovery', Load_Prev_Data=False, classes=classes,color_norm=True)
+DAPL.Import_Data(directory='../Data/Final/Discovery', Load_Prev_Data=False, classes=classes,color_norm=False)
 
-folds = 25
+folds = 100
 seeds = np.array(range(folds))
 epochs_min = 25
 graph_seed = 0

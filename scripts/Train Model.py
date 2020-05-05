@@ -8,15 +8,9 @@ warnings.filterwarnings('ignore')
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-#Train Classifier on Discovery Cohort
-classes = ['AML','APL']
 
-#Select for only Immature cells
-cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
-device = '/device:GPU:'+ str(gpu)
-DAPL = DeepAPL_SC('blast_class',device=device)
-DAPL.Import_Data(directory='../Data/Final/Discovery', Load_Prev_Data=False, classes=classes,
-                 include_cell_types=cell_types,color_norm=True)
+DAPL = DeepAPL_SC('load_data',device=gpu)
+DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 
 folds = 100
 seeds = np.array(range(folds))
@@ -26,7 +20,7 @@ DAPL.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,epochs_min=epochs_min,
                           stop_criterion=0.25,test_size=0.25,graph_seed=graph_seed,
                           weight_by_class=True)
 DAPL.Get_Cell_Predicted()
-with open('Cell_Preds_norm.pkl','wb') as f:
+with open('Cell_Preds_blast_norm.pkl','wb') as f:
     pickle.dump(DAPL.Cell_Pred,f,protocol=4)
-with open('Cell_Masks_norm.pkl','wb') as f:
+with open('Cell_Masks_blast_norm.pkl','wb') as f:
     pickle.dump(DAPL.w,f,protocol=4)

@@ -13,8 +13,12 @@ from sklearn.model_selection import StratifiedKFold, LeaveOneOut, KFold
 from sklearn.metrics import f1_score, recall_score, precision_score, roc_auc_score,accuracy_score
 import scipy.stats
 from DeepAPL.functions.color_norm import *
+import copy
+from skimage import io
+from skimage.morphology import binary_closing, disk, binary_dilation, remove_small_objects
+import scipy.ndimage as nd
 
-def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,load_images=True,color_norm=True):
+def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,load_images=True,color_norm=True,nmf=False,rm_rbc=False):
 
     sub_dir_2 = os.path.join(sub_dir,'Signed slides')
     type_list = os.listdir(sub_dir_2)
@@ -35,9 +39,7 @@ def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,lo
             if load_images is True:
                 img = imread(file)
                 img = resize(cvtColor(img, COLOR_BGR2RGB),(360,360))
-                #img = resize(cvtColor(img, COLOR_BGR2GRAY),(360,360))
                 #img = np.expand_dims(img,-1)
-                #img = img / 255
                 img = img.astype('float32')
                 # img = np.expand_dims(img, 0)
                 imgs.append(img)
@@ -47,25 +49,168 @@ def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,lo
     cell_type = np.asarray(cell_type)
     cell_type_raw = cell_type
 
+    if sample is not None:
+        if len(imgs) > sample:
+            idx = list(range(len(imgs)))
+            idx = np.random.choice(idx, sample, replace=False)
+            imgs = list(np.array(imgs)[idx])
+            files = files[idx]
+            cell_type = cell_type[idx]
+
     if len(imgs) != 0:
         if color_norm:
             # normalize imgs
             cns = ColorNormStains()
             cns.process_img_data(imgs)
-            imgs = cns.Get_Normed_Data()
-        imgs = np.stack(imgs,axis=0)
+            imgs_norm,imgs_nmf = cns.Get_Normed_Data()
+            if rm_rbc:
+                #get masks
+                masks = [create_mask_rbc(x) for x in imgs_nmf]
 
-        if sample is not None:
-            if len(imgs) > sample:
-                idx = list(range(len(imgs)))
-                idx = np.random.choice(idx, sample, replace=False)
-                imgs = imgs[idx]
-                files = files[idx]
-                cell_type = cell_type[idx]
+                imgs = np.stack(imgs_norm, axis=0)
+                masks = np.stack(masks,axis=0)
+                imgs[masks] = 1.0
+            else:
+                imgs = np.stack(imgs_norm, axis=0)
+
+            fig,ax = plt.subplots(10,10,figsize=(10,10))
+            ax = np.ndarray.flatten(ax)
+            sel = range(len(imgs))
+            for a,s in zip(ax,sel):
+                a.imshow(imgs[s])
+                a.set_xticks([])
+                a.set_yticks([])
+            plt.tight_layout()
+
+        else:
+            imgs = np.stack(imgs, axis=0)
+            imgs = imgs / 255
+
+            if rm_rbc:
+                cns = ColorNormStains()
+                cns.process_img_data(imgs)
+                imgs_temp, imgs_nmf = cns.Get_Normed_Data()
+                # get masks
+                masks = [create_mask_rbc(x) for x in imgs_nmf]
+                masks = np.stack(masks, axis=0)
+                imgs[masks,:] = cns.I_0
 
         imgs = np.expand_dims(imgs,0)
 
     return imgs, files, cell_type, cell_type_raw
+
+def create_mask_rbc_dep(img):
+    #get mask for rbc
+    mask = copy.copy(img[:,:,2])
+    th_c = np.percentile(mask,70)
+    mask[mask > th_c] = 1.0
+    mask[mask <= th_c] = 0.0
+    mask = mask.astype('bool')
+    mask = remove_small_objects(mask,min_size=150)
+    strel = disk(10)
+    mask = binary_closing(mask,strel)
+    mask = nd.morphology.binary_fill_holes(mask)
+    strel = disk(20)
+    mask = binary_dilation(mask, strel)
+    mask_rbc = mask
+
+    #get masks for nucleus
+    mask = copy.copy(img[:,:,0])
+    th_c = np.percentile(mask,95)
+    mask[mask > th_c] = 1.0
+    mask[mask <= th_c] = 0.0
+    mask = mask.astype('bool')
+    mask = remove_small_objects(mask,min_size=150)
+    strel = disk(10)
+    mask = binary_closing(mask,strel)
+    mask = nd.morphology.binary_fill_holes(mask)
+    strel = disk(10)
+    mask = binary_dilation(mask, strel)
+    mask_nuc_1 = mask
+
+    mask = copy.copy(img[:,:,1])
+    th_c = np.percentile(mask,95)
+    mask[mask > th_c] = 1.0
+    mask[mask <= th_c] = 0.0
+    mask = mask.astype('bool')
+    mask = remove_small_objects(mask,min_size=150)
+    strel = disk(10)
+    mask = binary_closing(mask,strel)
+    mask = nd.morphology.binary_fill_holes(mask)
+    strel = disk(10)
+    mask = binary_dilation(mask, strel)
+    mask_nuc_2 = mask
+    mask_nuc = (mask_nuc_1.astype(int) + mask_nuc_2.astype(int))
+    mask_nuc[mask_nuc>1] = 1
+
+    mask = mask_rbc.astype(int) - mask_nuc
+    mask[mask<0] = 0
+
+    fig,ax = plt.subplots(2,3,figsize=(10,5))
+    ax = np.ndarray.flatten(ax)
+    ax[0].imshow(img[:,:,0])
+    ax[0].set_title('channel 1')
+    ax[1].imshow(img[:,:,1])
+    ax[1].set_title('channel 2')
+    ax[2].imshow(img[:,:,2])
+    ax[2].set_title('channel 3')
+    ax[3].imshow(img[:,:,0]*img[:,:,1])
+    ax[3].set_title('1 * 2')
+    ax[4].imshow(img[:,:,1]*img[:,:,2])
+    ax[4].set_title('2 * 3')
+    ax[5].imshow(img[:,:,0]*img[:,:,2])
+    ax[5].set_title('1 * 3')
+    plt.tight_layout()
+
+    plt.figure()
+    plt.imshow(img[:,:,0])
+    plt.figure()
+    plt.imshow(img[:,:,1])
+    plt.figure()
+    plt.imshow(img[:,:,0]*img[:,:,1])
+    plt.figure()
+
+
+
+
+    return mask.astype('bool')
+
+def create_mask_rbc(img):
+    #get mask for rbc
+    mask = copy.copy(img[:,:,2])
+    th_c = np.percentile(mask,70)
+    th_c = 0.008
+    mask[mask > th_c] = 1.0
+    mask[mask <= th_c] = 0.0
+    mask = mask.astype('bool')
+    mask = remove_small_objects(mask,min_size=150)
+    strel = disk(10)
+    mask = binary_closing(mask,strel)
+    mask = nd.morphology.binary_fill_holes(mask)
+    strel = disk(20)
+    mask = binary_dilation(mask, strel)
+    mask_rbc = mask
+
+    #get masks for nucleus
+    mask = copy.copy(img[:,:,0])*copy.copy(img[:,:,1])
+    th_c = np.percentile(mask,95)
+    th_c = 0.006
+    mask[mask > th_c] = 1.0
+    mask[mask <= th_c] = 0.0
+    mask = mask.astype('bool')
+    mask = remove_small_objects(mask,min_size=150)
+    strel = disk(10)
+    mask = binary_closing(mask,strel)
+    mask = nd.morphology.binary_fill_holes(mask)
+    strel = disk(10)
+    mask = binary_dilation(mask, strel)
+    mask_nuc = mask
+
+    mask = mask_rbc.astype(int) - mask_nuc.astype(int)
+    mask[mask<0] = 0
+    mask = mask.astype('bool')
+    return mask
+
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
 

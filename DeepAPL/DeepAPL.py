@@ -14,9 +14,9 @@ from copy import deepcopy
 import shutil
 
 class base(object):
-    def __init__(self,Name='tr_obj',device='/device:GPU:0'):
+    def __init__(self,Name='tr_obj',device=0):
         self.Name = Name
-        self.device = device
+        self.device = '/device:GPU:'+str(device)
 
         #Create directory for results of analysis
         directory = self.Name + '_Results'
@@ -35,12 +35,17 @@ class base(object):
 
     def Import_Data(self,directory,Load_Prev_Data=False,classes=None,sample=None,
                     include_cell_types=None,exclude_cell_types=None,save_data=True,
-                    color_norm=True):
+                    color_norm=True,nmf=False,rm_rbc=False):
         if Load_Prev_Data is False:
+            no_folders = False
 
             if classes is None:
                 classes = [d for d in os.listdir(directory) if os.path.isdir(directory + d)]
                 classes = [f for f in classes if not f.startswith('.')]
+
+            if not classes:
+                classes = [directory.split('/')[-1]]
+                no_folders = True
 
             self.lb = LabelEncoder()
             self.lb.fit(classes)
@@ -58,18 +63,28 @@ class base(object):
             pts_exclude = []
             pts_exclude_label = []
             for type in self.classes:
-                pts = os.listdir(os.path.join(directory,type))
+                if no_folders:
+                    pts = os.listdir(directory)
+                else:
+                    pts = os.listdir(os.path.join(directory,type))
+
+                pt_idx = np.random.choice(len(pts),10,replace=False)
+                pts = list(np.array(pts)[pt_idx])
                 for pt in pts:
-                    sub_dir = os.path.join(directory,type,pt)
+                    if no_folders:
+                        sub_dir = os.path.join(directory, pt)
+                    else:
+                        sub_dir = os.path.join(directory,type,pt)
+
                     list_dir = sorted(os.listdir(sub_dir))
                     if 'Signed slides' in list_dir:
                         imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir,sample,
-                                                                                            include_cell_types,exclude_cell_types,load_images,color_norm)
+                                                                                            include_cell_types,exclude_cell_types,load_images,color_norm,nmf,rm_rbc)
                         smear = None
                     else:
                         sub_dir_2 = os.path.join(sub_dir,list_dir[0])
                         imgs_temp,files_temp,cell_type_temp,cell_type_raw_temp = Get_Images(sub_dir_2,sample,
-                                                                                            include_cell_types,exclude_cell_types,load_images,color_norm)
+                                                                                            include_cell_types,exclude_cell_types,load_images,color_norm,nmf,rm_rbc)
                         smear = sub_dir_2.split('/')[-1]
 
                     if not isinstance(imgs_temp,list):
@@ -188,7 +203,8 @@ class DeepAPL_SC(base):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None):
+    def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
+               l1_units=12,l2_units=24,l3_units=32):
         GO = graph_object()
         with tf.device(self.device):
             GO.graph_model = tf.Graph()
@@ -196,7 +212,7 @@ class DeepAPL_SC(base):
                 if graph_seed is not None:
                     tf.set_random_seed(graph_seed)
                 Get_Inputs(GO,self)
-                Features = Conv_Model(GO)
+                Features = Conv_Model(GO,l1_units=l1_units,l2_units=l2_units,l3_units=l3_units)
                 if multisample_dropout_num_masks is not None:
                     GO.w = MultiSample_Dropout(X=Features,
                                                num_masks=multisample_dropout_num_masks,
@@ -310,15 +326,18 @@ class DeepAPL_SC(base):
             GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
 
     def Train(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
+              l1_units=12, l2_units=24, l3_units=32,
               batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
               dropout_rate=0.0,multisample_dropout_rate=0.0):
         self._reset_models()
-        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed)
+        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed,
+                    l1_units,l2_units,l3_units)
         self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
                     dropout_rate,multisample_dropout_rate)
 
     def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
                              weight_by_class=False, multisample_dropout_num_masks=None,graph_seed=None,
+                             l1_units=12, l2_units=24, l3_units=32,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                             dropout_rate = 0.0, multisample_dropout_rate = 0.0):
 
@@ -328,7 +347,8 @@ class DeepAPL_SC(base):
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
-        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed)
+        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed,
+                    l1_units,l2_units,l3_units)
 
         for i in range(0, folds):
             print(i)
@@ -461,7 +481,6 @@ class DeepAPL_SC(base):
         fig,ax = plt.subplots(nrows=nrows,ncols=ncols,figsize=figsize)
         ax = np.ndarray.flatten(ax)
 
-
         for a,i,p,c in zip(ax,idx,prob,ci):
             a.imshow(self.imgs[i])
             if prob_show:
@@ -487,7 +506,7 @@ class DeepAPL_SC(base):
 
         for a,i,p,c in zip(ax,idx,prob,ci):
             a.imshow(self.imgs[i])
-            a.imshow(w[i], alpha=0.65, cmap='jet')
+            a.imshow(w[i], alpha=0.65, cmap='jet',vmin=0,vmax=0)
             if prob_show:
                 if hasattr(self,'predicted_dist'):
                     a.set_title('Prob = '+str(round(p,3))+', CI='+str(round(c,3)),fontsize=prob_font)
