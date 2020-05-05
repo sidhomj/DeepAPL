@@ -28,30 +28,30 @@ cell_type_keep = np.isin(DAPL.cell_type,cell_types)
 idx_keep = idx_samples_keep*cell_type_keep
 label_dict = dict(zip(df_meta['JH Number'],df_meta['Diagnosis']))
 
-DAPL.imgs = DAPL.imgs[idx_keep]
-DAPL.patients = DAPL.patients[idx_keep]
-DAPL.cell_type = DAPL.cell_type[idx_keep]
-DAPL.files = DAPL.files[idx_keep]
-DAPL.smears = DAPL.smears[idx_keep]
-DAPL.labels = np.array([label_dict[x] for x in DAPL.patients])
-DAPL.lb = LabelEncoder().fit(DAPL.labels)
-DAPL.Y = DAPL.lb.transform(DAPL.labels)
-DAPL.Y = OneHotEncoder(sparse=False).fit_transform(DAPL.Y.reshape(-1,1))
-DAPL.predicted = np.zeros((len(DAPL.Y), len(DAPL.lb.classes_)))
+DAPL_train = DeepAPL_SC(name,gpu)
+DAPL_train.imgs = DAPL.imgs[idx_keep]
+DAPL_train.patients = DAPL.patients[idx_keep]
+DAPL_train.cell_type = DAPL.cell_type[idx_keep]
+DAPL_train.files = DAPL.files[idx_keep]
+DAPL_train.smears = DAPL.smears[idx_keep]
+DAPL_train.labels = np.array([label_dict[x] for x in DAPL_train.patients])
+DAPL_train.lb = LabelEncoder().fit(DAPL_train.labels)
+DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
+DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
+DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
 folds = 10
 seeds = np.array(range(folds))
 epochs_min = 25
 graph_seed = 0
-DAPL.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,epochs_min=epochs_min,
+DAPL_train.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,epochs_min=epochs_min,
                           stop_criterion=0.25,test_size=0.25,graph_seed=graph_seed,
                           weight_by_class=True)
-DAPL.Get_Cell_Predicted()
+DAPL_train.Get_Cell_Predicted()
 with open(name+'.pkl', 'wb') as f:
-    pickle.dump([DAPL.Cell_Pred,DAPL.w,DAPL.imgs,
-                DAPL.patients,DAPL.cell_type,DAPL.files,DAPL.smears,
-                DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb],f,protocol=4)
-
+    pickle.dump([DAPL_train.Cell_Pred,DAPL_train.w,DAPL_train.imgs,
+                DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
+                DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
 
 
 

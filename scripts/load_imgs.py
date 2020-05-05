@@ -14,19 +14,10 @@ warnings.filterwarnings('ignore')
 # DAPL = DeepAPL_SC('load_data_norm_nmf')
 # DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=True,nmf=True)
 
+# DAPL = DeepAPL_SC('load_data_rmrbc')
+# DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=False,nmf=False,rm_rbc=True)
+
 # DAPL = DeepAPL_SC('load_data_norm_rmrbc')
 # DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=True,nmf=False,rm_rbc=True)
 
-# DAPL = DeepAPL_SC('load_data_rmrbc')
-# DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=False,nmf=False,rm_rbc=True,sample=10)
-# check=1
-
-DAPL = DeepAPL_SC('load_data_rmrbc_test')
-DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=False,nmf=False,rm_rbc=True,sample=10)
-check=1
-import matplotlib.pyplot as plt
-fig,ax = plt.subplots(10,10,figsize=(10,10))
-ax = np.ndarray.flatten(ax)
-for ii,a in enumerate(ax):
-    a.imshow(DAPL.imgs[ii])
 

@@ -8,12 +8,15 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 
-#Training No Color norm only on data after 2018 in the Discovery Cohort
+data = 'load_data'
+name = 'discovery_blast'
+name_out = 'validation_blast'
+
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-DAPL = DeepAPL_SC('load_data_rmrbc',gpu)
-DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=True,color_norm=False)
+DAPL = DeepAPL_SC(data,gpu)
+DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 
 df_meta = pd.read_csv('../Data/master.csv')
 df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
@@ -28,7 +31,7 @@ cell_type_keep = np.isin(DAPL.cell_type,cell_types)
 idx_keep = idx_samples_keep*cell_type_keep
 label_dict = dict(zip(df_meta['JH Number'],df_meta['Diagnosis']))
 
-DAPL_train = DeepAPL_SC('model_1',gpu)
+DAPL_train = DeepAPL_SC(name,gpu)
 DAPL_train.imgs = DAPL.imgs[idx_keep]
 DAPL_train.patients = DAPL.patients[idx_keep]
 DAPL_train.cell_type = DAPL.cell_type[idx_keep]
@@ -43,7 +46,7 @@ DAPL_train.Ensemble_Inference()
 DAPL_train.counts = np.ones_like(DAPL_train.predicted)*100
 DAPL_train.Get_Cell_Predicted()
 
-with open('Validation_Inference_norbc.pkl','wb') as f:
+with open(name_out+'.pkl','wb') as f:
     pickle.dump([DAPL_train.Cell_Pred,DAPL_train.w,DAPL_train.imgs,
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
