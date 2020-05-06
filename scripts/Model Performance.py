@@ -10,31 +10,21 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-# classes = ['AML','APL']
-# cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
-# device = '/device:GPU:'+ str(gpu)
-# DAPL = DeepAPL_SC('temp')
-# DAPL.Import_Data(directory='Data/All', Load_Prev_Data=True, classes=classes,
-#                  include_cell_types=cell_types)
-# pred_file = 'Cell_Preds_blast_norbc.pkl'
-# mask_file = 'Cell_Masks_blast_norbc.pkl'
-#
-# with open(pred_file,'rb') as f:
-#     DAPL.Cell_Pred = pickle.load(f)
-# with open(mask_file,'rb') as f:
-#     DAPL.w = pickle.load(f)
 file = 'Discovery_nmf2.pkl'
 file = 'Validation_Inference_nmf2.pkl'
 file = 'Discovery_blast_norbc.pkl'
 file = 'Validation_Inference_norbc.pkl'
+file = 'validation_blast_rmrbc.pkl'
+file = 'validation_blast_2018.pkl'
+file = 'discovery_blast_2018.pkl'
+file = 'all_blast_post2018_norm.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
-DAPL.Representative_Cells('AML',50)
 
-
+DAPL.Representative_Cells('AML',25,cmap='bwr')
 # df_meta = pd.read_csv('../Data/master.csv')
 # df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
 # df_meta.sort_values(by='Date of Diagnosis',inplace=True)
@@ -62,19 +52,19 @@ ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 
-#Cell Predictions by Cell Type
-order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
-fig,ax = plt.subplots(figsize=(5,5))
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
-plt.xlabel('Cellavision Cell Type',fontsize=24)
-plt.ylabel('Probability of APL',fontsize=24)
-ax.xaxis.set_ticks_position('top')
-plt.xticks(rotation=-45,fontsize=16)
-plt.yticks(fontsize=16)
-plt.tight_layout()
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
-ax.tick_params(axis='x', which=u'both',length=0)
+# #Cell Predictions by Cell Type
+# order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
+# fig,ax = plt.subplots(figsize=(5,5))
+# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
+# plt.xlabel('Cellavision Cell Type',fontsize=24)
+# plt.ylabel('Probability of APL',fontsize=24)
+# ax.xaxis.set_ticks_position('top')
+# plt.xticks(rotation=-45,fontsize=16)
+# plt.yticks(fontsize=16)
+# plt.tight_layout()
+# ax.spines['right'].set_visible(False)
+# ax.spines['top'].set_visible(False)
+# ax.tick_params(axis='x', which=u'both',length=0)
 
 
 # sns.violinplot(data=DAPL.Cell_Pred,x='Label',y='APL',hue='Cell_Type',hue_order=order,cut=0)
@@ -159,6 +149,7 @@ df_auc['num_cells_per_sample'] = n_list
 df_auc['auc'] = auc_list
 df_auc['number_pos'] = number_pos
 df_auc['number_neg'] = number_neg
+plt.figure()
 sns.lineplot(data=df_auc,x='num_cells_per_sample',y='auc')
 plt.ylim([0,1.1])
 plt.xlabel('Num Cells Per Sample',fontsize=24)

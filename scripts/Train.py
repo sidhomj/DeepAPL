@@ -7,8 +7,8 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 warnings.filterwarnings('ignore')
 
-data = 'load_data'
-name = 'discovery_blast'
+data = 'load_data_norm'
+name = 'all_blast_post2018_norm'
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
@@ -19,8 +19,8 @@ DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 df_meta = pd.read_csv('../Data/master.csv')
 df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
 df_meta.sort_values(by='Date of Diagnosis',inplace=True)
-# df_meta =df_meta[df_meta['Date of Diagnosis']>= '2018-01-01']
-df_meta = df_meta[df_meta['Cohort']=='Discovery']
+df_meta =df_meta[df_meta['Date of Diagnosis']>= '2018-01-01']
+# df_meta = df_meta[df_meta['Cohort']=='Discovery']
 
 idx_samples_keep = np.isin(DAPL.patients,df_meta['JH Number'])
 cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
@@ -40,7 +40,7 @@ DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
 DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
-folds = 10
+folds = 100
 seeds = np.array(range(folds))
 epochs_min = 25
 graph_seed = 0
@@ -52,7 +52,5 @@ with open(name+'.pkl', 'wb') as f:
     pickle.dump([DAPL_train.Cell_Pred,DAPL_train.w,DAPL_train.imgs,
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
-
-
 
 

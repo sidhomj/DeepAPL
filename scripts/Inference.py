@@ -9,8 +9,9 @@ warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 
 data = 'load_data'
-name = 'discovery_blast'
-name_out = 'validation_blast'
+name = 'discovery_blast_2018'
+name_out = 'validation_blast_2018'
+num_mc = 10
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
@@ -43,10 +44,11 @@ DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
 DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 DAPL_train.Ensemble_Inference()
-DAPL_train.counts = np.ones_like(DAPL_train.predicted)*100
+DAPL_train.counts = np.ones_like(DAPL_train.predicted)*num_mc
 DAPL_train.Get_Cell_Predicted()
 
 with open(name_out+'.pkl','wb') as f:
     pickle.dump([DAPL_train.Cell_Pred,DAPL_train.w,DAPL_train.imgs,
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
+check=1

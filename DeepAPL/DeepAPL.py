@@ -12,6 +12,7 @@ import tensorflow as tf
 from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix
 from copy import deepcopy
 import shutil
+import scipy
 
 class base(object):
     def __init__(self,Name='tr_obj',device=0):
@@ -459,7 +460,7 @@ class DeepAPL_SC(base):
 
     def Representative_Cells(self,type='APL',num=12,cell_type=None,
                              prob_show=True,prob_font=12,figsize=(12,12),
-                             show_title=True):
+                             show_title=True,cmap='jet'):
         df = deepcopy(self.Cell_Pred)
         if cell_type is not None:
             df = df[df['Cell_Type'] == cell_type]
@@ -498,15 +499,23 @@ class DeepAPL_SC(base):
         plt.tight_layout()
 
         w = self.w
+        # w = scipy.special.softmax(w,axis=-1)
         t = self.lb.transform([type])[0]
         w = w[:,:,:,t]
 
         fig,ax = plt.subplots(nrows=nrows,ncols=ncols,figsize=figsize)
         ax = np.ndarray.flatten(ax)
 
+        w_list = []
+        for i in idx:
+            w_list.append(w[i])
+        vmin = np.min(w_list)
+        vmax = np.max(w_list)
         for a,i,p,c in zip(ax,idx,prob,ci):
             a.imshow(self.imgs[i])
-            a.imshow(w[i], alpha=0.65, cmap='jet',vmin=0,vmax=0)
+            w_plot = resize(w[i],self.imgs[i][:,:,0].shape)
+            a.imshow(w_plot, alpha=0.65, cmap=cmap,vmin=vmin,vmax=vmax)
+            # a.imshow(w[i], alpha=0.65, cmap=cmap)
             if prob_show:
                 if hasattr(self,'predicted_dist'):
                     a.set_title('Prob = '+str(round(p,3))+', CI='+str(round(c,3)),fontsize=prob_font)
