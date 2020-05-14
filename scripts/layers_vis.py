@@ -18,8 +18,8 @@ with open(file,'rb') as f:
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
-DAPL.Cell_Pred.sort_values(by='APL',inplace=True,ascending=False)
-img_sel = DAPL.Cell_Pred.index[1]
+DAPL.Cell_Pred.sort_values(by='AML',inplace=True,ascending=False)
+img_sel = DAPL.Cell_Pred.index[0]
 img = DAPL.imgs[img_sel][np.newaxis,:,:,:]
 Y = DAPL.Y[img_sel]
 DAPL = DeepAPL_SC(name)
@@ -38,9 +38,12 @@ def save_img(img,path,cmap=None):
     fig.savefig(path)
     plt.close()
 
+
 dir = 'layers'
 if not os.path.exists(dir):
     os.makedirs(dir)
+
+save_img(np.squeeze(img),os.path.join(dir,'img.png'))
 
 subdir = 'l1'
 if not os.path.exists(os.path.join(dir,subdir)):
