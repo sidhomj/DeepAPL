@@ -10,35 +10,19 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-file = 'Discovery_nmf2.pkl'
-file = 'Validation_Inference_nmf2.pkl'
-file = 'Discovery_blast_norbc.pkl'
-file = 'Validation_Inference_norbc.pkl'
-file = 'validation_blast_rmrbc.pkl'
-file = 'validation_blast_2018.pkl'
-file = 'discovery_blast_2018.pkl'
-file = 'all_blast_post2018_rmrbc.pkl'
-file = 'ig_test.pkl'
-# file = 'ig_test_validation.pkl'
-# file = 'ig_test_discovery.pkl'
+file = 'discovery_model.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
-DAPL.Representative_Cells('AML',25,cmap='bwr')
-# df_meta = pd.read_csv('../Data/master.csv')
-# df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
-# df_meta.sort_values(by='Date of Diagnosis',inplace=True)
-# df_meta =df_meta[df_meta['Date of Diagnosis']>= '2018-01-01']
-# DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Patient'].isin(df_meta['JH Number'])]
-
+#remove cells that do not have training data or are in the blurred out group
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Label']!='out']
+
 #Cell Performance
 plt.figure()
-# plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate',fontsize=24)
@@ -71,13 +55,9 @@ ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
 
-
-# sns.violinplot(data=DAPL.Cell_Pred,x='Label',y='APL',hue='Cell_Type',hue_order=order,cut=0)
-
 #Sample Level Performance
 DAPL.Sample_Summary()
 plt.figure()
-# plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate',fontsize=24)

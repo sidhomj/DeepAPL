@@ -71,8 +71,6 @@ class base(object):
                 else:
                     pts = os.listdir(os.path.join(directory,type))
 
-                pt_idx = np.random.choice(len(pts),10,replace=False)
-                pts = list(np.array(pts)[pt_idx])
                 for pt in pts:
                     if no_folders:
                         sub_dir = os.path.join(directory, pt)
