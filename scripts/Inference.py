@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 
 data = 'load_data'
 name = 'discovery_blast_2018'
+name = 'ig_test_discovery'
 name_out = 'validation_blast_2018'
-num_mc = 10
+name_out = 'ig_test_validation'
+num_mc = 100
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'

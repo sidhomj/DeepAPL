@@ -13,6 +13,8 @@ from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix
 from copy import deepcopy
 import shutil
 import scipy
+import cv2
+import matplotlib.colors as mcolors
 
 class base(object):
     def __init__(self,Name='tr_obj',device=0):
@@ -204,6 +206,45 @@ class DeepAPL_SC(base):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
+    # def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
+    #            l1_units=12,l2_units=24,l3_units=32):
+    #     GO = graph_object()
+    #     with tf.device(self.device):
+    #         GO.graph_model = tf.Graph()
+    #         with GO.graph_model.as_default():
+    #             if graph_seed is not None:
+    #                 tf.set_random_seed(graph_seed)
+    #             Get_Inputs(GO,self)
+    #             Features = Conv_Model(GO,l1_units=l1_units,l2_units=l2_units,l3_units=l3_units)
+    #             if multisample_dropout_num_masks is not None:
+    #                 GO.w = MultiSample_Dropout(X=Features,
+    #                                            num_masks=multisample_dropout_num_masks,
+    #                                            units=GO.Y.shape[1],
+    #                                            rate=GO.prob_multisample,
+    #                                            activation=None)
+    #             else:
+    #                 GO.w = tf.layers.dense(Features, GO.Y.shape[1])
+    #             GO.w = tf.identity(GO.w,'w')
+    #             GO.logits = tf.reduce_mean(GO.w, [1, 2])
+    #
+    #             if weight_by_class:
+    #                 weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), GO.class_weights, transpose_b=True), axis=1)
+    #             else:
+    #                 weights = 1
+    #
+    #             GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(GO.Y,GO.logits))
+    #
+    #             GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
+    #
+    #             with tf.name_scope('Accuracy_Measurements'):
+    #                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+    #                 correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+    #                 GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+    #
+    #             GO.saver = tf.train.Saver(max_to_keep=None)
+    #
+    #     self.GO = GO
+
     def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
                l1_units=12,l2_units=24,l3_units=32):
         GO = graph_object()
@@ -214,16 +255,19 @@ class DeepAPL_SC(base):
                     tf.set_random_seed(graph_seed)
                 Get_Inputs(GO,self)
                 Features = Conv_Model(GO,l1_units=l1_units,l2_units=l2_units,l3_units=l3_units)
+                GO.w = Features
+                GO.w = tf.identity(GO.w,'w')
+                fc =  tf.reduce_max(GO.w, [1, 2])
+                # fc = tf.concat([tf.reduce_max(GO.l1, [1, 2]), tf.reduce_max(GO.l2, [1, 2]), tf.reduce_max(GO.l3, [1, 2]),
+                #            tf.reduce_max(GO.l4, [1, 2])], axis=1)
                 if multisample_dropout_num_masks is not None:
-                    GO.w = MultiSample_Dropout(X=Features,
+                    GO.logits = MultiSample_Dropout(X=fc,
                                                num_masks=multisample_dropout_num_masks,
                                                units=GO.Y.shape[1],
                                                rate=GO.prob_multisample,
                                                activation=None)
                 else:
-                    GO.w = tf.layers.dense(Features, GO.Y.shape[1])
-                GO.w = tf.identity(GO.w,'w')
-                GO.logits = tf.reduce_mean(GO.w, [1, 2])
+                    GO.logits = tf.layers.dense(fc, GO.Y.shape[1])
 
                 if weight_by_class:
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), GO.class_weights, transpose_b=True), axis=1)
@@ -244,7 +288,8 @@ class DeepAPL_SC(base):
         self.GO = GO
 
     def _train(self,batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
-               dropout_rate=0.0,multisample_dropout_rate=0.0,iteration=0):
+               dropout_rate=0.0,multisample_dropout_rate=0.0,iteration=0,
+               train_loss_min=None,convergence='validation'):
         GO = self.GO
         tf.reset_default_graph()
         config = tf.ConfigProto()
@@ -253,6 +298,7 @@ class DeepAPL_SC(base):
         e=1
         stop_check_list = []
         val_loss_total = []
+        train_loss_total = []
         class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
 
         with tf.Session(graph=GO.graph_model, config=config) as sess:
@@ -270,6 +316,7 @@ class DeepAPL_SC(base):
                     loss_temp.append(loss_i)
 
                 train_loss = np.mean(loss_temp)
+                train_loss_total.append(train_loss)
 
                 Vars = [self.valid[0],self.valid[3]]
                 loss_temp = []
@@ -307,10 +354,20 @@ class DeepAPL_SC(base):
                       "Testing loss: {:.5f}".format(test_loss),
                       "Testing AUC: {:.5}".format(test_auc))
 
-                stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
                 if e > epochs_min:
-                    if np.sum(stop_check_list[-3:]) >= 3:
-                        break
+                    if train_loss_min is not None:
+                        if np.mean(train_loss_total[-3:]) < train_loss_min:
+                            break
+                    elif convergence == 'validation':
+                        if val_loss_total:
+                            stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
+                            if np.sum(stop_check_list[-3:]) >= 3:
+                                break
+                    elif convergence == 'training':
+                        if train_loss_total:
+                            stop_check_list.append(stop_check(train_loss_total, stop_criterion, stop_criterion_window))
+                            if np.sum(stop_check_list[-3:]) >= 3:
+                                break
 
                 e +=1
 
@@ -329,18 +386,21 @@ class DeepAPL_SC(base):
     def Train(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
               l1_units=12, l2_units=24, l3_units=32,
               batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
-              dropout_rate=0.0,multisample_dropout_rate=0.0):
+              dropout_rate=0.0,multisample_dropout_rate=0.0,
+              train_loss_min=None,convergence='validation'):
         self._reset_models()
         self._build(weight_by_class,multisample_dropout_num_masks,graph_seed,
                     l1_units,l2_units,l3_units)
         self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
-                    dropout_rate,multisample_dropout_rate)
+                    dropout_rate,multisample_dropout_rate,
+                    train_loss_min,convergence)
 
     def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
                              weight_by_class=False, multisample_dropout_num_masks=None,graph_seed=None,
                              l1_units=12, l2_units=24, l3_units=32,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
-                            dropout_rate = 0.0, multisample_dropout_rate = 0.0):
+                            dropout_rate = 0.0, multisample_dropout_rate = 0.0,
+                             train_loss_min=None,convergence='validation'):
 
         y_pred = []
         y_test = []
@@ -357,7 +417,8 @@ class DeepAPL_SC(base):
                 np.random.seed(seeds[i])
             self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
             self._train(batch_size, epochs_min, stop_criterion, stop_criterion_window,
-                        dropout_rate, multisample_dropout_rate,iteration=i)
+                        dropout_rate, multisample_dropout_rate,iteration=i,
+                        train_loss_min=train_loss_min,convergence=convergence)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -595,7 +656,90 @@ class DeepAPL_SC(base):
         self.y_pred = self.predicted
         self.y_test = self.Y
 
+    def IG(self,img,a,b,models=['model_0'],steps=100):
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        pred_list = []
+        grad_list = []
+        with tf.Session(config=config) as sess:
+            baseline = cv2.GaussianBlur(img, (101, 101), 100)
+            inc = (img - baseline) / steps
+            img_s = [baseline + inc * i for i in range(1, steps + 1)]
+            img_s = np.stack(img_s)
+            for model in models:
+                for _ in range(1):
+                    saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models',model, 'model.ckpt.meta'))
+                    saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
+                    graph = tf.get_default_graph()
+                    X = graph.get_tensor_by_name('Input:0')
+                    pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
+                    pred = pred[:,a]-pred[:,b]
+                    feed_dict = {X: img_s}
+                    preds = sess.run(pred, feed_dict=feed_dict)
+                    grad = tf.abs(tf.gradients(pred,X)[0])
+                    grad_out = sess.run(grad,feed_dict)
+                    pred_list.append(preds)
+                    grad_list.append(grad_out)
 
+        preds = np.mean(pred_list,0)
+        grad_out = np.mean(grad_list,0)
+
+        # #show transition
+        # fig,ax = plt.subplots(5,5,figsize=(10,10))
+        # ax = np.ndarray.flatten(ax)
+        # idx = np.random.choice(range(len(img_s)),25,replace=False)
+        # idx = np.sort(idx)
+        # for ii,a in enumerate(ax):
+        #     a.imshow(img_s[idx[ii]])
+        #     a.set_xticks([])
+        #     a.set_yticks([])
+        #     a.set_title(preds[idx[ii]])
+        # #
+        #plot preds
+        # plt.figure()
+        # plt.plot(preds)
+        # #
+        # #plot grads
+        # grads = np.sum(grad_out,axis=(1,2,3))
+        # plt.figure()
+        # plt.plot(grads)
+
+        #plot att
+        att = np.sum(grad_out,axis=(0,-1))
+        att = NormalizeData(att)
+        self.grads = grad_out
+        self.ig_preds = preds
+        return att
+
+        # plt.figure()
+        # plt.imshow(img)
+        #
+        # plt.figure()
+        # plt.imshow(img)
+        # plt.imshow(att,cmap='jet',alpha=0.5)
+        #
+        # #plot image
+        # plt.figure()
+        # plt.imshow(img)
+        # colors = [(0, 1, 0, c) for c in np.linspace(0, 1, 100)]
+        # cmap = mcolors.LinearSegmentedColormap.from_list('mycmap', colors, N=8)
+        # plt.imshow(att,cmap=cmap)
+        #
+        # plt.figure()
+        # plt.imshow(att,cmap='jet')
+
+
+
+
+
+
+
+
+
+            # feed_dict = {X: np.ones_like(img)[np.newaxis,:,:,:]}
+            # # feed_dict = {X: img_noise[np.newaxis,:,:,:]}
+            # preds = sess.run(pred, feed_dict=feed_dict)
 
 
 

@@ -7,6 +7,9 @@ warnings.filterwarnings('ignore')
 
 # DAPL = DeepAPL_SC('load_data')
 # DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=False)
+
+DAPL = DeepAPL_SC('load_data_wb')
+DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=True)
 #
 # DAPL = DeepAPL_SC('load_data_norm')
 # DAPL.Import_Data(directory='../Data/Final/All', Load_Prev_Data=False,color_norm=True)

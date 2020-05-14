@@ -211,6 +211,8 @@ def create_mask_rbc(img):
     mask = mask.astype('bool')
     return mask
 
+def NormalizeData(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
 
 def Get_Train_Valid_Test(Vars,Y=None,test_size=0.25,regression=False,LOO = None):
 

@@ -17,7 +17,10 @@ file = 'Validation_Inference_norbc.pkl'
 file = 'validation_blast_rmrbc.pkl'
 file = 'validation_blast_2018.pkl'
 file = 'discovery_blast_2018.pkl'
-file = 'all_blast_post2018_norm.pkl'
+file = 'all_blast_post2018_rmrbc.pkl'
+file = 'ig_test.pkl'
+# file = 'ig_test_validation.pkl'
+# file = 'ig_test_discovery.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
@@ -31,6 +34,8 @@ DAPL.Representative_Cells('AML',25,cmap='bwr')
 # df_meta =df_meta[df_meta['Date of Diagnosis']>= '2018-01-01']
 # DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Patient'].isin(df_meta['JH Number'])]
 
+DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
+DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Label']!='out']
 #Cell Performance
 plt.figure()
 # plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
@@ -53,18 +58,18 @@ ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 
 # #Cell Predictions by Cell Type
-# order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
-# fig,ax = plt.subplots(figsize=(5,5))
-# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
-# plt.xlabel('Cellavision Cell Type',fontsize=24)
-# plt.ylabel('Probability of APL',fontsize=24)
-# ax.xaxis.set_ticks_position('top')
-# plt.xticks(rotation=-45,fontsize=16)
-# plt.yticks(fontsize=16)
-# plt.tight_layout()
-# ax.spines['right'].set_visible(False)
-# ax.spines['top'].set_visible(False)
-# ax.tick_params(axis='x', which=u'both',length=0)
+order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
+fig,ax = plt.subplots(figsize=(5,5))
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,hue='Label')
+plt.xlabel('Cellavision Cell Type',fontsize=24)
+plt.ylabel('Probability of APL',fontsize=24)
+ax.xaxis.set_ticks_position('top')
+plt.xticks(rotation=-45,fontsize=16)
+plt.yticks(fontsize=16)
+plt.tight_layout()
+ax.spines['right'].set_visible(False)
+ax.spines['top'].set_visible(False)
+ax.tick_params(axis='x', which=u'both',length=0)
 
 
 # sns.violinplot(data=DAPL.Cell_Pred,x='Label',y='APL',hue='Cell_Type',hue_order=order,cut=0)
@@ -105,6 +110,7 @@ df_pro['Label'] = df_pro.index.map(label_dict)
 bin_dict = {'AML':0,'APL':1}
 df_pro['Label_Bin'] = df_pro['Label'].map(bin_dict)
 df_pro['Pro_Prop'] = df_pro['Pro']/df_pro['Patient']
+pro_dict = dict(zip(df_pro.index,df_pro['Pro_Prop']))
 
 y_test = np.array(df_pro['Label_Bin'])
 y_pred = np.array(df_pro['Pro_Prop'])
@@ -128,17 +134,20 @@ agg = DAPL.Cell_Pred.groupby(['Patient']).agg({'Label':'first','n':'sum'})
 DAPL.Sample_Summary()
 n_list = []
 auc_list = []
+auc_pro = []
 number_pos = []
 number_neg = []
 for n in range(0,np.max(agg['n'])):
     try:
         keep = np.array(list(agg[agg['n']>=n].index))
         sample_summary_temp = DAPL.sample_summary[DAPL.sample_summary.index.isin(keep)]
+        sample_summary_temp['pro'] = sample_summary_temp.index.map(pro_dict)
         y_test = np.asarray(sample_summary_temp['Label']) == 'APL'
         y_pred = np.asarray(sample_summary_temp['APL'])
         roc_score = roc_auc_score(y_test,y_pred)
         auc_list.append(roc_score)
         n_list.append(n)
+        auc_pro.append(roc_auc_score(y_test,sample_summary_temp['pro']))
         number_pos.append(np.sum(y_test))
         number_neg.append(np.sum(y_test!=True))
     except:
@@ -147,15 +156,18 @@ for n in range(0,np.max(agg['n'])):
 df_auc = pd.DataFrame()
 df_auc['num_cells_per_sample'] = n_list
 df_auc['auc'] = auc_list
+df_auc['auc_pro'] = auc_pro
 df_auc['number_pos'] = number_pos
 df_auc['number_neg'] = number_neg
 plt.figure()
-sns.lineplot(data=df_auc,x='num_cells_per_sample',y='auc')
+sns.lineplot(data=df_auc,x='num_cells_per_sample',y='auc',label='CNN')
+sns.lineplot(data=df_auc,x='num_cells_per_sample',y='auc_pro',label='Proportion of Promyelocytes')
 plt.ylim([0,1.1])
 plt.xlabel('Num Cells Per Sample',fontsize=24)
 plt.ylabel('AUC',fontsize=24)
 plt.xticks(fontsize=16)
 plt.yticks(fontsize=16)
+plt.legend(loc="lower right",prop={'size':12},frameon=False)
 plt.tight_layout()
 
 sns.lineplot(data=df_auc,x='number_pos',y='auc',label='APL')

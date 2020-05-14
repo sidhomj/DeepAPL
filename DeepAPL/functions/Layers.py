@@ -13,19 +13,45 @@ def Get_Inputs(GO,self):
     GO.Y = tf.placeholder(dtype=tf.float32, shape=[None, self.Y.shape[1]])
     GO.class_weights = tf.placeholder(dtype=tf.float32, shape=[1, self.Y.shape[1]])
 
+# def Conv_Model(GO,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_units=32):
+#     conv = tf.layers.conv2d(GO.X, filters=l1_units, kernel_size=kernel_size, strides=strides, padding='valid', activation=tf.nn.relu)
+#     GO.l1 = tf.identity(conv,'l1')
+#     conv = tf.layers.dropout(conv,GO.prob)
+#
+#     conv = tf.layers.conv2d(conv, filters=l2_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
+#     GO.l2 = tf.identity(conv,'l2')
+#     conv = tf.layers.dropout(conv,GO.prob)
+#
+#     kernel_size = (4,4)
+#     strides = (1,1)
+#     conv = tf.layers.conv2d(conv, filters=l3_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
+#     GO.l3 = tf.identity(conv,'l3')
+#     conv = tf.layers.dropout(conv,GO.prob)
+#     return conv
+
 def Conv_Model(GO,kernel_size=(2,2),strides=(2,2),l1_units=12,l2_units=24,l3_units=32):
+    kernel_size = (2,2)
+    strides = (2,2)
     conv = tf.layers.conv2d(GO.X, filters=l1_units, kernel_size=kernel_size, strides=strides, padding='valid', activation=tf.nn.relu)
     GO.l1 = tf.identity(conv,'l1')
     conv = tf.layers.dropout(conv,GO.prob)
 
+    # kernel_size = (2,2)
+    # strides = (2,2)
     conv = tf.layers.conv2d(conv, filters=l2_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
     GO.l2 = tf.identity(conv,'l2')
     conv = tf.layers.dropout(conv,GO.prob)
 
-    kernel_size = (4,4)
-    strides = (1,1)
+    # kernel_size = (2,2)
+    # strides = (2,2)
     conv = tf.layers.conv2d(conv, filters=l3_units, kernel_size=kernel_size, strides=strides, padding='valid',activation=tf.nn.relu)
     GO.l3 = tf.identity(conv,'l3')
+    conv = tf.layers.dropout(conv,GO.prob)
+
+    kernel_size = (30,30)
+    strides = (1,1)
+    conv = tf.layers.conv2d(conv, filters=l3_units, kernel_size=kernel_size, strides=strides, padding='same',activation=tf.nn.relu)
+    GO.l4 = tf.identity(conv,'l4')
     conv = tf.layers.dropout(conv,GO.prob)
     return conv
 
