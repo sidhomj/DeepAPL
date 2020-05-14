@@ -2,34 +2,30 @@ from DeepAPL.DeepAPL import DeepAPL_SC
 import os
 import numpy as np
 import pickle
-import warnings
-warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
-
+from sklearn.metrics import roc_curve,roc_auc_score
+import seaborn as sns
+import matplotlib
+import pandas as pd
+matplotlib.rc('font', family='Times New Roman')
 gpu = 1
-os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
-os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
-#Train Classifier on Discovery Cohort
-classes = ['AML','APL']
 
-#Select for only Immature cells
-cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
-device = '/device:GPU:'+ str(gpu)
-DAPL = DeepAPL_SC('blast_class',device=device)
-DAPL.Import_Data(directory='../Data/All', Load_Prev_Data=True, classes=classes,
-                 include_cell_types=cell_types)
+name = 'discovery_model'
+file = 'validation_model.pkl'
+DAPL = DeepAPL_SC(name)
+with open(file,'rb') as f:
+    DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
+    DAPL.patients,DAPL.cell_type,DAPL.files,\
+    DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
+DAPL.Cell_Pred.sort_values(by='APL',inplace=True,ascending=False)
+img_sel = DAPL.Cell_Pred.index[1]
+img = DAPL.imgs[img_sel][np.newaxis,:,:,:]
+Y = DAPL.Y[img_sel]
+DAPL = DeepAPL_SC(name)
+DAPL.imgs = img
+DAPL.Y = Y
 DAPL.Inference()
-pred_file = 'Cell_Preds.pkl'
-mask_file = 'Cell_Masks.pkl'
-
-with open(pred_file,'rb') as f:
-    DAPL.Cell_Pred = pickle.load(f)
-with open(mask_file,'rb') as f:
-    DAPL.w = pickle.load(f)
-
-DAPL.Cell_Pred.sort_values(by='AML',inplace=True,ascending=False)
-img_sel = DAPL.Cell_Pred.index[0]
 
 def save_img(img,path,cmap=None):
     fig,ax = plt.subplots(figsize=(5,5))
@@ -42,17 +38,33 @@ def save_img(img,path,cmap=None):
     fig.savefig(path)
     plt.close()
 
-save_img(DAPL.imgs[img_sel],'../results/arch/input.png')
+dir = 'layers'
+if not os.path.exists(dir):
+    os.makedirs(dir)
 
+# save_img(DAPL.imgs[img_sel],'../results/arch/input.png')
+
+subdir = 'l1'
+if not os.path.exists(os.path.join(dir,subdir)):
+    os.makedirs(os.path.join(dir,subdir))
 for f in range(DAPL.l1.shape[-1]):
-    save_img(DAPL.l1[img_sel][:,:,f],'../results/arch/l1/'+str(f)+'.png',cmap='jet')
+    save_img(DAPL.l1[0][:,:,f],os.path.join(dir,subdir,str(f)+'.png'),cmap='jet')
 
+subdir = 'l2'
+if not os.path.exists(os.path.join(dir,subdir)):
+    os.makedirs(os.path.join(dir,subdir))
 for f in range(DAPL.l2.shape[-1]):
-    save_img(DAPL.l2[img_sel][:,:,f],'../results/arch/l2/'+str(f)+'.png',cmap='jet')
+    save_img(DAPL.l2[0][:,:,f],os.path.join(dir,subdir,str(f)+'.png'),cmap='jet')
 
+subdir = 'l3'
+if not os.path.exists(os.path.join(dir,subdir)):
+    os.makedirs(os.path.join(dir,subdir))
 for f in range(DAPL.l3.shape[-1]):
-    save_img(DAPL.l3[img_sel][:,:,f],'../results/arch/l3/'+str(f)+'.png',cmap='jet')
+    save_img(DAPL.l3[0][:,:,f],os.path.join(dir,subdir,str(f)+'.png'),cmap='jet')
 
+subdir = 'l4'
+if not os.path.exists(os.path.join(dir,subdir)):
+    os.makedirs(os.path.join(dir,subdir))
 for f in range(DAPL.w.shape[-1]):
-    save_img(DAPL.w[img_sel][:,:,f],'../results/arch/output/'+str(f)+'.png',cmap='jet')
+    save_img(DAPL.l4[0][:,:,f],os.path.join(dir,subdir,str(f)+'.png'),cmap='jet')
 
