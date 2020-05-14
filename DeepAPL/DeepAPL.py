@@ -38,7 +38,7 @@ class base(object):
 
     def Import_Data(self,directory,Load_Prev_Data=False,classes=None,sample=None,
                     include_cell_types=None,exclude_cell_types=None,save_data=True,
-                    color_norm=True,nmf=False,rm_rbc=False):
+                    color_norm=False,nmf=False,rm_rbc=False):
         if Load_Prev_Data is False:
             no_folders = False
 
