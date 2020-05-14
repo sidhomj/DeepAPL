@@ -256,8 +256,6 @@ class DeepAPL_SC(base):
                 GO.w = Features
                 GO.w = tf.identity(GO.w,'w')
                 fc =  tf.reduce_max(GO.w, [1, 2])
-                # fc = tf.concat([tf.reduce_max(GO.l1, [1, 2]), tf.reduce_max(GO.l2, [1, 2]), tf.reduce_max(GO.l3, [1, 2]),
-                #            tf.reduce_max(GO.l4, [1, 2])], axis=1)
                 if multisample_dropout_num_masks is not None:
                     GO.logits = MultiSample_Dropout(X=fc,
                                                num_masks=multisample_dropout_num_masks,
@@ -369,9 +367,13 @@ class DeepAPL_SC(base):
 
                 e +=1
 
-            #Get Activation Maps
+            #Get Feature Maps
             Vars = [self.imgs]
             w = []
+            l1 = []
+            l2 = []
+            l3 = []
+            l4 = []
             for vars in get_batches(Vars, batch_size=batch_size, random=False):
                 feed_dict = {GO.X: vars[0]}
                 w_temp = sess.run(GO.w,feed_dict=feed_dict)

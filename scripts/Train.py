@@ -45,17 +45,16 @@ pt_w = []
 cell_type_w = []
 files_w = []
 smears_w = []
-num_w = 10
 for pt in np.unique(DAPL_train.patients):
     img_add = DAPL_train.imgs[DAPL_train.patients==pt]
     img_add = np.stack([cv2.GaussianBlur(x,(101,101),100) for x in img_add])
     img_w.append(img_add)
     pt = pt + '_'
     label_dict[pt] = 'out'
-    pt_w.append(np.array([pt]*num_w))
-    cell_type_w.append(np.array(['None']*num_w))
-    files_w.append(np.array(['None']*num_w))
-    smears_w.append(np.array(['None']*num_w))
+    pt_w.append(np.array([pt]*len(img_add)))
+    cell_type_w.append(np.array(['None']*len(img_add)))
+    files_w.append(np.array(['None']*len(img_add)))
+    smears_w.append(np.array(['None']*len(img_add)))
 
 img_w = np.vstack(img_w)
 pt_w = np.hstack(pt_w)
