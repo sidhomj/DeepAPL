@@ -204,45 +204,6 @@ class DeepAPL_SC(base):
             shutil.rmtree(self.models_dir)
         os.makedirs(self.models_dir)
 
-    # def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
-    #            l1_units=12,l2_units=24,l3_units=32):
-    #     GO = graph_object()
-    #     with tf.device(self.device):
-    #         GO.graph_model = tf.Graph()
-    #         with GO.graph_model.as_default():
-    #             if graph_seed is not None:
-    #                 tf.set_random_seed(graph_seed)
-    #             Get_Inputs(GO,self)
-    #             Features = Conv_Model(GO,l1_units=l1_units,l2_units=l2_units,l3_units=l3_units)
-    #             if multisample_dropout_num_masks is not None:
-    #                 GO.w = MultiSample_Dropout(X=Features,
-    #                                            num_masks=multisample_dropout_num_masks,
-    #                                            units=GO.Y.shape[1],
-    #                                            rate=GO.prob_multisample,
-    #                                            activation=None)
-    #             else:
-    #                 GO.w = tf.layers.dense(Features, GO.Y.shape[1])
-    #             GO.w = tf.identity(GO.w,'w')
-    #             GO.logits = tf.reduce_mean(GO.w, [1, 2])
-    #
-    #             if weight_by_class:
-    #                 weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), GO.class_weights, transpose_b=True), axis=1)
-    #             else:
-    #                 weights = 1
-    #
-    #             GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(GO.Y,GO.logits))
-    #
-    #             GO.opt = tf.train.AdamOptimizer(learning_rate=0.001).minimize(GO.loss)
-    #
-    #             with tf.name_scope('Accuracy_Measurements'):
-    #                 GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
-    #                 correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
-    #                 GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
-    #
-    #             GO.saver = tf.train.Saver(max_to_keep=None)
-    #
-    #     self.GO = GO
-
     def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
                l1_units=12,l2_units=24,l3_units=32):
         GO = graph_object()
