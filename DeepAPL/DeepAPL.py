@@ -616,6 +616,7 @@ class DeepAPL_SC(base):
 
         self.y_pred = self.predicted
         self.y_test = self.Y
+        self.counts = np.ones_like(self.predicted) * len(models)
 
     def IG(self,img,a,b,models=['model_0'],steps=100):
         tf.reset_default_graph()

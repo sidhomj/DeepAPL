@@ -11,6 +11,7 @@ matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
 file = 'discovery_model.pkl'
+file = 'validation_model.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
@@ -150,15 +151,15 @@ plt.yticks(fontsize=16)
 plt.legend(loc="lower right",prop={'size':12},frameon=False)
 plt.tight_layout()
 
-sns.lineplot(data=df_auc,x='number_pos',y='auc',label='APL')
-sns.lineplot(data=df_auc,x='number_neg',y='auc',label='AML')
-plt.ylim([0,1.1])
-plt.xlabel('Number of Samples',fontsize=24)
-plt.ylabel('AUC',fontsize=24)
-plt.xticks(fontsize=16)
-plt.yticks(fontsize=16)
-plt.tight_layout()
-plt.legend()
+# sns.lineplot(data=df_auc,x='number_pos',y='auc',label='APL')
+# sns.lineplot(data=df_auc,x='number_neg',y='auc',label='AML')
+# plt.ylim([0,1.1])
+# plt.xlabel('Number of Samples',fontsize=24)
+# plt.ylabel('AUC',fontsize=24)
+# plt.xticks(fontsize=16)
+# plt.yticks(fontsize=16)
+# plt.tight_layout()
+# plt.legend()
 # # plt.figure()
 # # # plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
 # # plt.xlim([0.0, 1.0])

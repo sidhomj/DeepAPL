@@ -11,10 +11,9 @@ import matplotlib.pyplot as plt
 data = 'load_data'
 name = 'discovery_model'
 name_out = 'validation_model'
-num_mc = 100
 
 #Load Trained Model
-gpu = 1
+gpu = 2
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_SC(data,gpu)
@@ -39,14 +38,11 @@ DAPL_train.cell_type = DAPL.cell_type[idx_keep]
 DAPL_train.files = DAPL.files[idx_keep]
 DAPL_train.smears = DAPL.smears[idx_keep]
 DAPL_train.labels = np.array([label_dict[x] for x in DAPL_train.patients])
-DAPL_train.lb = LabelEncoder().fit(DAPL_train.labels)
-DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
-DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
-DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
+DAPL_train.lb = LabelEncoder().fit(['AML','APL','out'])
+DAPL_train.predicted = np.zeros((len(DAPL_train.imgs), len(DAPL_train.lb.classes_)))
 
 #Conduct Inference over ensemble of trained models on discovery cohort
 DAPL_train.Ensemble_Inference()
-DAPL_train.counts = np.ones_like(DAPL_train.predicted)*num_mc
 DAPL_train.Get_Cell_Predicted()
 
 with open(name_out+'.pkl','wb') as f:
