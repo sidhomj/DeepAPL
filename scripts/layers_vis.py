@@ -42,8 +42,6 @@ dir = 'layers'
 if not os.path.exists(dir):
     os.makedirs(dir)
 
-# save_img(DAPL.imgs[img_sel],'../results/arch/input.png')
-
 subdir = 'l1'
 if not os.path.exists(os.path.join(dir,subdir)):
     os.makedirs(os.path.join(dir,subdir))
