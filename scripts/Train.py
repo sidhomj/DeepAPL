@@ -10,7 +10,7 @@ import cv2
 from sklearn.metrics import roc_auc_score
 
 data = 'load_data'
-name = 'discovery_results'
+name = 'discovery_model'
 
 #open model
 gpu = 1
