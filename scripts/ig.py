@@ -22,9 +22,9 @@ with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
-df = copy.deepcopy(DAPL.Cell_Pred)
 
-sel = 'AML'
+df = copy.deepcopy(DAPL.Cell_Pred)
+sel = 'APL'
 if sel == 'AML':
     a = 0
     b = 1
