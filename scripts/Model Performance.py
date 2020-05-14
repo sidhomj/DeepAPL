@@ -11,7 +11,7 @@ matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
 file = 'discovery_model.pkl'
-# file = 'validation_model.pkl'
+file = 'validation_model.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
@@ -67,7 +67,7 @@ y_test = np.asarray(DAPL.sample_summary['Label']) == 'APL'
 y_pred = np.asarray(DAPL.sample_summary['APL'])
 roc_score = roc_auc_score(y_test,y_pred)
 fpr, tpr, th = roc_curve(y_test, y_pred)
-id = 'All Pts'
+id = 'CNN'
 plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='grey')
 optimal_idx = np.argmax(tpr - fpr)
 optimal_threshold = th[optimal_idx]

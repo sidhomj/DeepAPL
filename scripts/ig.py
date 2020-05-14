@@ -11,7 +11,7 @@ matplotlib.rc('font', family='Times New Roman')
 
 name = 'discovery_model'
 file = 'discovery_model.pkl'
-# file = 'validation_model.pkl'
+file = 'validation_model.pkl'
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
