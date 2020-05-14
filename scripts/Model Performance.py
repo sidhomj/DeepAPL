@@ -11,7 +11,7 @@ matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
 file = 'discovery_model.pkl'
-file = 'validation_model.pkl'
+# file = 'validation_model.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
@@ -45,7 +45,7 @@ ax.tick_params(axis='y', labelsize=16)
 # #Cell Predictions by Cell Type
 order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
 fig,ax = plt.subplots(figsize=(5,5))
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,hue='Label')
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')

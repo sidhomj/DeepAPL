@@ -11,7 +11,7 @@ matplotlib.rc('font', family='Times New Roman')
 
 name = 'discovery_model'
 file = 'discovery_model.pkl'
-file = 'validation_model.pkl'
+# file = 'validation_model.pkl'
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
@@ -33,23 +33,24 @@ else:
     b = 0
 df.sort_values(by=sel, inplace=True, ascending=False)
 df = df[df['Label'] == sel]
-img_idx = np.array(df.index)[0:25]
+img_idx = np.array(df.index)[0:9]
+np.random.seed(0)
 models = np.random.choice(range(100), 25, replace=False)
 models = ['model_' + str(x) for x in models]
 
 #Plot Representative Sequences
-fig,ax = plt.subplots(5,5,figsize=(10,10))
+fig,ax = plt.subplots(3,3,figsize=(10,10))
 ax = np.ndarray.flatten(ax)
 for ii,ax_ in zip(img_idx,ax):
     img = DAPL.imgs[ii]
     ax_.imshow(img)
     ax_.set_xticks([])
     ax_.set_yticks([])
-    ax_.set_title(str(np.round(df.loc[ii][sel],3)))
+    # ax_.set_title(str(np.round(df.loc[ii][sel],3)))
 plt.tight_layout()
 
 #Plot IG maps
-fig,ax = plt.subplots(5,5,figsize=(10,10))
+fig,ax = plt.subplots(3,3,figsize=(10,10))
 ax = np.ndarray.flatten(ax)
 for ii,ax_ in zip(img_idx,ax):
     img = DAPL.imgs[ii]
@@ -58,6 +59,6 @@ for ii,ax_ in zip(img_idx,ax):
     ax_.imshow(att,cmap='jet',alpha=0.5)
     ax_.set_xticks([])
     ax_.set_yticks([])
-    ax_.set_title(str(np.round(df.loc[ii][sel],3)))
+    # ax_.set_title(str(np.round(df.loc[ii][sel],3)))
 plt.tight_layout()
 
