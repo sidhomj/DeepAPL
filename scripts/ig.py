@@ -10,8 +10,12 @@ import matplotlib
 matplotlib.rc('font', family='Times New Roman')
 
 name = 'discovery_model'
+
 file = 'discovery_model.pkl'
+write = 'discovery'
+
 file = 'validation_model.pkl'
+write = 'validation'
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'

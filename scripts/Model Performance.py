@@ -10,7 +10,10 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
+name = 'discovery'
 file = 'discovery_model.pkl'
+
+name = 'validation'
 file = 'validation_model.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -41,11 +44,12 @@ optimal_threshold = th[optimal_idx]
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
+plt.savefig(name+'_sc_auc.eps')
 
 # #Cell Predictions by Cell Type
 order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
 fig,ax = plt.subplots(figsize=(5,5))
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')
@@ -55,6 +59,7 @@ plt.tight_layout()
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
+plt.savefig(name+'_celltype.eps')
 
 #Sample Level Performance
 DAPL.Sample_Summary()
@@ -100,11 +105,13 @@ fpr, tpr, th = roc_curve(y_test, y_pred)
 id = 'Proportion of Promyelocytes'
 plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='blue')
 
-plt.legend(loc="lower right",prop={'size':12},frameon=False)
+plt.legend(loc="lower right",prop={'size':16},frameon=False)
 plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
+plt.savefig(name+'_sample_auc.eps')
+
 
 #Assess performance over min number of cells per sample
 
@@ -148,8 +155,10 @@ plt.xlabel('Num Cells Per Sample',fontsize=24)
 plt.ylabel('AUC',fontsize=24)
 plt.xticks(fontsize=16)
 plt.yticks(fontsize=16)
-plt.legend(loc="lower right",prop={'size':12},frameon=False)
+plt.legend(loc="lower right",prop={'size':16},frameon=False)
 plt.tight_layout()
+plt.savefig(name+'_auc_v_numcells.eps')
+
 
 # sns.lineplot(data=df_auc,x='number_pos',y='auc',label='APL')
 # sns.lineplot(data=df_auc,x='number_neg',y='auc',label='AML')
@@ -173,30 +182,3 @@ plt.tight_layout()
 # id = 'Pts >= 10 cells'
 # plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='green')
 
-
-
-
-
-
-pred_file = 'Cell_Preds_blast_nonorm_2018plus.pkl'
-with open(pred_file,'rb') as f:
-    Cell_Pred_nonorm = pickle.load(f)
-
-pred_file = 'Cell_Preds_blast_norm_2018plus.pkl'
-with open(pred_file,'rb') as f:
-    Cell_Pred_norm = pickle.load(f)
-
-plt.scatter(Cell_Pred_norm['APL'],Cell_Pred_nonorm['APL'])
-plt.xlabel('norm_preds')
-plt.ylabel('no_norm_preds')
-
-sns.violinplot(data=Cell_Pred_norm,x='Label',y='APL')
-plt.title('Norm')
-
-df1 = Cell_Pred_norm[['Label','APL']]
-df1['type'] = 'norm'
-df2 = Cell_Pred_nonorm[['Label','APL']]
-df2['type'] = 'nonorm'
-df_comp = pd.concat([df1,df2],axis=0)
-
-sns.violinplot(data=df_comp,x='Label',y='APL',hue='type',cut=0)
