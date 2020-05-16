@@ -10,11 +10,11 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-name = 'discovery'
-file = 'discovery_model.pkl'
+name = 'discovery_all'
+file = 'discovery_model_all.pkl'
 
-name = 'validation'
-file = 'validation_model.pkl'
+name = 'validation_all'
+file = 'validation_model_all.pkl'
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
@@ -24,6 +24,12 @@ with open(file,'rb') as f:
 #remove cells that do not have training data or are in the blurred out group
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Label']!='out']
+
+# #convert prob to binary call
+# DAPL.Cell_Pred['APL'][DAPL.Cell_Pred['APL']>=0.80] = 1.0
+# DAPL.Cell_Pred['APL'][DAPL.Cell_Pred['APL']<0.80] = 0.0
+# DAPL.Cell_Pred['AML'] = 1 - DAPL.Cell_Pred['APL']
+
 
 #Cell Performance
 plt.figure()
@@ -49,7 +55,8 @@ plt.savefig(name+'_sc_auc.eps')
 # #Cell Predictions by Cell Type
 order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
 fig,ax = plt.subplots(figsize=(5,5))
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
+# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')

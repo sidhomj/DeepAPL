@@ -16,8 +16,8 @@ name = 'discovery_model'
 file = 'discovery_model.pkl'
 write = 'discovery'
 
-# file = 'validation_model.pkl'
-# write = 'validation'
+file = 'validation_model_all.pkl'
+write = 'validation_all'
 
 gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
