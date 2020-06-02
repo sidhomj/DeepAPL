@@ -15,6 +15,7 @@ import shutil
 import scipy
 import cv2
 import matplotlib.colors as mcolors
+import h5py
 
 class base(object):
     def __init__(self,Name='tr_obj',device=0):
@@ -113,7 +114,7 @@ class base(object):
             Y = self.lb.transform(labels)
             OH = OneHotEncoder(sparse=False)
             Y = OH.fit_transform(Y.reshape(-1,1))
-
+            # img_dim_1, img_dim_2,img_dim_3 = imgs.shape[1],imgs.shape[2],imgs.shape[3]
             if save_data is True:
                 np.save(os.path.join(self.Name, 'imgs'), imgs)
                 with open(os.path.join(self.Name, 'data.pkl'), 'wb') as f:
@@ -121,12 +122,12 @@ class base(object):
 
 
         else:
-
             imgs = np.load(os.path.join(self.Name, 'imgs.npy'))
             with open(os.path.join(self.Name,'data.pkl'),'rb') as f:
                 Y,labels,patients,cell_type,files,smears,self.lb = pickle.load(f)
 
 
+        # self.imgs = np.array(range(len(labels)))
         self.imgs = imgs
         self.labels = labels
         self.patients = patients
@@ -163,6 +164,39 @@ class base(object):
         plt.legend(loc="lower right")
         plt.show()
         self.ROC = dict(zip(class_lb,ROC_DFs))
+
+    def Get_Cell_Predicted(self,confidence=0.95,Load_Prev_Data=False):
+        if Load_Prev_Data is False:
+            df = pd.DataFrame()
+            df['Patient'] = self.patients
+            df['Cell_Type'] = self.cell_type
+            df['Label'] = self.labels
+            df['Files'] = self.files
+            df['Counts'] = self.counts[:,0]
+
+            for ii,c in enumerate(self.lb.classes_,0):
+                df[c] = self.predicted[:,ii]
+
+            if hasattr(self,'predicted_dist'):
+                for ii, c in enumerate(self.lb.classes_, 0):
+                    # compute CI for predictions
+                    predicted_dist = self.predicted_dist[:, :, ii]
+                    ci = []
+                    for d in predicted_dist.T:
+                        ci.append(mean_confidence_interval(d,confidence=confidence))
+                    ci = np.vstack(ci)
+                    df[c+'_mean']=ci[:,0]
+                    df[c+'_low']=ci[:,1]
+                    df[c+'_high']=ci[:,2]
+                    df[c+'_ci']=ci[:,3]
+
+            with open(os.path.join(self.Name,'cell_preds.pkl'),'wb') as f:
+                pickle.dump(df,f,protocol=4)
+        else:
+            with open(os.path.join(self.Name,'cell_preds.pkl'),'rb') as f:
+                df = pickle.load(f)
+
+        self.Cell_Pred = df
 
 class DeepAPL_SC(base):
     def Get_Train_Valid_Test(self,test_size=0.25,combine_train_valid=False,train_all=False):
@@ -328,19 +362,6 @@ class DeepAPL_SC(base):
 
                 e +=1
 
-            #Get Feature Maps
-            Vars = [self.imgs]
-            w = []
-            l1 = []
-            l2 = []
-            l3 = []
-            l4 = []
-            for vars in get_batches(Vars, batch_size=batch_size, random=False):
-                feed_dict = {GO.X: vars[0]}
-                w_temp = sess.run(GO.w,feed_dict=feed_dict)
-                w.append(w_temp)
-
-            self.w = np.vstack(w)
             self.predicted[self.test_idx] += self.y_pred
             GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
 
@@ -365,7 +386,6 @@ class DeepAPL_SC(base):
 
         y_pred = []
         y_test = []
-        w = []
         predicted = np.zeros_like(self.predicted)
         counts = np.zeros_like(self.predicted)
         self._reset_models()
@@ -383,7 +403,6 @@ class DeepAPL_SC(base):
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
-            w.append(self.w)
 
             predicted[self.test_idx] += self.y_pred
             counts[self.test_idx] += 1
@@ -403,45 +422,8 @@ class DeepAPL_SC(base):
         self.y_pred = np.vstack(y_pred)
         self.predicted = np.divide(predicted,counts, out = np.zeros_like(predicted), where = counts != 0)
         self.counts = counts
-        w_dist = []
-        for w_temp in w:
-            w_dist.append(np.expand_dims(w_temp,0))
-        w_dist = np.vstack(w_dist)
-        self.w = np.mean(w_dist,0)
         print('Monte Carlo Simulation Completed')
 
-    def Get_Cell_Predicted(self,confidence=0.95,Load_Prev_Data=False):
-        if Load_Prev_Data is False:
-            df = pd.DataFrame()
-            df['Patient'] = self.patients
-            df['Cell_Type'] = self.cell_type
-            df['Label'] = self.labels
-            df['Files'] = self.files
-            df['Counts'] = self.counts[:,0]
-
-            for ii,c in enumerate(self.lb.classes_,0):
-                df[c] = self.predicted[:,ii]
-
-            if hasattr(self,'predicted_dist'):
-                for ii, c in enumerate(self.lb.classes_, 0):
-                    # compute CI for predictions
-                    predicted_dist = self.predicted_dist[:, :, ii]
-                    ci = []
-                    for d in predicted_dist.T:
-                        ci.append(mean_confidence_interval(d,confidence=confidence))
-                    ci = np.vstack(ci)
-                    df[c+'_mean']=ci[:,0]
-                    df[c+'_low']=ci[:,1]
-                    df[c+'_high']=ci[:,2]
-                    df[c+'_ci']=ci[:,3]
-
-            with open(os.path.join(self.Name,'cell_preds.pkl'),'wb') as f:
-                pickle.dump(df,f,protocol=4)
-        else:
-            with open(os.path.join(self.Name,'cell_preds.pkl'),'rb') as f:
-                df = pickle.load(f)
-
-        self.Cell_Pred = df
 
     def Sample_Summary(self):
         if hasattr(self,'predicted_dist'):
@@ -707,6 +689,273 @@ class DeepAPL_SC(base):
             # feed_dict = {X: np.ones_like(img)[np.newaxis,:,:,:]}
             # # feed_dict = {X: img_noise[np.newaxis,:,:,:]}
             # preds = sess.run(pred, feed_dict=feed_dict)
+
+class DeepAPL_WF(base):
+    def Get_Train_Valid_Test(self,test_size=0.25,combine_train_valid=False,train_all=False):
+        patients = np.unique(self.patients)
+        Y = np.asarray([self.Y[np.where(self.patients == x)[0][0]] for x in patients])
+        train,valid,test = Get_Train_Valid_Test([patients],Y,test_size=test_size)
+
+        self.train_idx =np.where(np.isin(self.patients,train[0]))[0]
+        self.valid_idx = np.where(np.isin(self.patients,valid[0]))[0]
+        self.test_idx = np.where(np.isin(self.patients,test[0]))[0]
+
+        self.train = train
+        self.valid = valid
+        self.test = test
+
+        if combine_train_valid:
+            train = []
+            for i in range(len(self.train)):
+                train.append(np.concatenate((self.train[i],self.valid[i]),0))
+            self.train = train
+            self.valid = self.test
+
+        if train_all:
+            train = []
+            for i in range(len(self.train)):
+                train.append(np.concatenate((self.train[i],self.valid[i],self.test[i]),0))
+            self.train = train
+
+    def _reset_models(self):
+        self.models_dir = os.path.join(self.Name,'models')
+        if os.path.exists(self.models_dir):
+            shutil.rmtree(self.models_dir)
+        os.makedirs(self.models_dir)
+
+    def _build(self,weight_by_class=False,multisample_dropout_num_masks = None,graph_seed=None,
+               l1_units=12,l2_units=24,l3_units=32,learning_rate=0.001):
+        GO = graph_object()
+        with tf.device(self.device):
+            GO.graph_model = tf.Graph()
+            with GO.graph_model.as_default():
+                if graph_seed is not None:
+                    tf.set_random_seed(graph_seed)
+                Get_Inputs(GO,self)
+                GO.sp = tf.sparse.placeholder(dtype=tf.float32, shape=[None, None], name='sp')
+                Features = Conv_Model(GO,l1_units=l1_units,l2_units=l2_units,l3_units=l3_units)
+                GO.w = Features
+                GO.w = tf.identity(GO.w,'w')
+                fc =  tf.reduce_max(GO.w, [1, 2])
+                fc = tf.layers.dense(fc,64,tf.nn.relu)
+                # fc = tf.layers.dense(fc,12,lambda x: isru(x, l=0, h=1, a=0, b=0))
+                sum = tf.sparse.reduce_sum(GO.sp,1)
+                sum.set_shape([GO.sp.shape[0], ])
+                sum = tf.expand_dims(sum, -1)
+                fc = tf.sparse.matmul(GO.sp, fc)/sum
+
+                if multisample_dropout_num_masks is not None:
+                    GO.logits = MultiSample_Dropout(X=fc,
+                                               num_masks=multisample_dropout_num_masks,
+                                               units=GO.Y.shape[1],
+                                               rate=GO.prob_multisample,
+                                               activation=None)
+                else:
+                    GO.logits = tf.layers.dense(fc, GO.Y.shape[1])
+
+                if weight_by_class:
+                    weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), GO.class_weights, transpose_b=True), axis=1)
+                else:
+                    weights = 1
+
+                GO.loss = tf.reduce_mean(weights*tf.nn.softmax_cross_entropy_with_logits_v2(GO.Y,GO.logits))
+
+                GO.opt = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(GO.loss)
+
+                with tf.name_scope('Accuracy_Measurements'):
+                    GO.predicted = tf.nn.softmax(GO.logits, name='predicted')
+                    correct_pred = tf.equal(tf.argmax(GO.predicted, 1), tf.argmax(GO.Y, 1))
+                    GO.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
+
+                GO.saver = tf.train.Saver(max_to_keep=None)
+
+        self.GO = GO
+
+    def _train(self,batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
+               dropout_rate=0.0,multisample_dropout_rate=0.0,iteration=0,
+               train_loss_min=None,convergence='validation',subsample=None):
+        GO = self.GO
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        e=1
+        stop_check_list = []
+        val_loss_total = []
+        train_loss_total = []
+        class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+
+        with tf.Session(graph=GO.graph_model, config=config) as sess:
+            sess.run(tf.global_variables_initializer())
+            while True:
+                train_loss,train_accuracy,train_predicted,train_auc = Run_Graph_WF(self.train,sess,self,GO,batch_size,random=True,
+                             train=True,drop_out_rate=dropout_rate,
+                             multisample_dropout_rate=multisample_dropout_rate,class_weights=class_weights,
+                            subsample=subsample)
+
+                # train_loss,train_accuracy,train_predicted,train_auc = Run_Graph_WF(self.train,sess,self,GO,batch_size,random=False,
+                #              train=False,class_weights=class_weights,subsample=None)
+
+                train_loss_total.append(train_loss)
+
+                # valid_loss,valid_accuracy,valid_predicted,valid_auc = Run_Graph_WF(self.valid,sess,self,GO,batch_size,random=False,
+                #              train=False,class_weights=class_weights)
+                #
+                # val_loss_total.append(valid_loss)
+                #
+                # test_loss,test_accuracy,test_predicted,test_auc = Run_Graph_WF(self.test,sess,self,GO,batch_size,random=False,
+                #              train=False,class_weights=class_weights)
+                #
+                # self.y_pred = test_predicted
+                # self.y_test = self.test[-1]
+
+                valid_loss = 1.0
+                test_loss = 1.0
+                test_auc = 1.0
+
+                print("Training_Statistics: \n",
+                      "Epoch: {}".format(e),
+                      "Training loss: {:.5f}".format(train_loss),
+                      "Validation loss: {:.5f}".format(valid_loss),
+                      "Testing loss: {:.5f}".format(test_loss),
+                      "Testing AUC: {:.5}".format(test_auc))
+
+                if e > epochs_min:
+                    if train_loss_min is not None:
+                        if np.mean(train_loss_total[-3:]) < train_loss_min:
+                            break
+                    elif convergence == 'validation':
+                        if val_loss_total:
+                            stop_check_list.append(stop_check(val_loss_total, stop_criterion, stop_criterion_window))
+                            if np.sum(stop_check_list[-3:]) >= 3:
+                                break
+                    elif convergence == 'training':
+                        if train_loss_total:
+                            stop_check_list.append(stop_check(train_loss_total, stop_criterion, stop_criterion_window))
+                            if np.sum(stop_check_list[-3:]) >= 3:
+                                break
+
+                e +=1
+
+            test_loss,test_accuracy,test_predicted,test_auc = Run_Graph_WF(self.test,sess,self,GO,batch_size,random=False,
+                         train=False,class_weights=class_weights)
+            self.y_pred = test_predicted
+            self.y_test = self.test[-1]
+
+            pred, idx = Get_Cell_Pred(self,batch_size,GO,sess)
+            self.predicted[idx] += pred
+            self.seq_idx = idx
+            GO.saver.save(sess, os.path.join(self.Name, 'models','model_'+str(iteration),'model.ckpt'))
+
+    def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
+                             weight_by_class=False, multisample_dropout_num_masks=None,graph_seed=None,
+                             l1_units=12, l2_units=24, l3_units=32,learning_rate=0.001,
+                             batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
+                            dropout_rate = 0.0, multisample_dropout_rate = 0.0,
+                             train_loss_min=None,convergence='validation',subsample=None):
+
+        y_pred = []
+        y_test = []
+        files = []
+        self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
+        counts = np.zeros_like(self.predicted)
+        self._reset_models()
+        self._build(weight_by_class,multisample_dropout_num_masks,graph_seed,
+                    l1_units,l2_units,l3_units,learning_rate)
+
+        for i in range(0, folds):
+            print(i)
+            if seeds is not None:
+                np.random.seed(seeds[i])
+            self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
+            self._train(batch_size, epochs_min, stop_criterion, stop_criterion_window,
+                        dropout_rate, multisample_dropout_rate,iteration=i,
+                        train_loss_min=train_loss_min,convergence=convergence,subsample=subsample)
+
+            y_test.append(self.y_test)
+            y_pred.append(self.y_pred)
+            files.append(self.test[0])
+            counts[self.seq_idx] += 1
+
+            y_test2 = np.vstack(y_test)
+            y_pred2 = np.vstack(y_pred)
+
+            print("Accuracy = {}".format(np.average(np.equal(np.argmax(y_pred2,1),np.argmax(y_test2,1)))))
+
+            if self.y_test.shape[1] == 2:
+                if i > 0:
+                    y_test2 = np.vstack(y_test)
+                    if (np.sum(y_test2[:, 0]) != len(y_test2)) and (np.sum(y_test2[:, 0]) != 0):
+                        print("AUC = {}".format(roc_auc_score(np.vstack(y_test), np.vstack(y_pred))))
+
+        self.y_test = np.vstack(y_test)
+        self.y_pred = np.vstack(y_pred)
+        files = np.hstack(files)
+        DFs =[]
+        for ii,c in enumerate(self.lb.classes_,0):
+            df_out = pd.DataFrame()
+            df_out['Samples'] = files
+            df_out['y_test'] = self.y_test[:,ii]
+            df_out['y_pred'] = self.y_pred[:,ii]
+            DFs.append(df_out)
+
+        self.DFs_pred = dict(zip(self.lb.classes_,DFs))
+        self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
+        self.counts = counts
+        print('Monte Carlo Simulation Completed')
+
+    def Inference(self,model='model_0',batch_size=100):
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        with tf.Session(config=config) as sess:
+            saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models',model, 'model.ckpt.meta'))
+            saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
+            graph = tf.get_default_graph()
+            sp_i = graph.get_tensor_by_name('sp/indices:0')
+            sp_v = graph.get_tensor_by_name('sp/values:0')
+            sp_s = graph.get_tensor_by_name('sp/shape:0')
+            X = graph.get_tensor_by_name('Input:0')
+            pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
+
+            out_list = []
+            sample_list = np.unique(self.patients)
+            for vars in get_batches([sample_list], batch_size=batch_size, random=False):
+                var_idx = np.where(np.isin(self.patients, vars[0]))[0]
+                lb = LabelEncoder()
+                lb.fit(vars[0])
+                i = lb.transform(self.patients[var_idx])
+
+                OH = OneHotEncoder(categories='auto')
+                sp = OH.fit_transform(i.reshape(-1, 1)).T
+                sp = sp.tocoo()
+                indices = np.mat([sp.row, sp.col]).T
+
+                feed_dict = {X: self.imgs[var_idx],
+                             sp_i: indices,
+                             sp_v: sp.data,
+                             sp_s: sp.shape}
+                out_list.append(sess.run(pred, feed_dict=feed_dict))
+
+            out_list = np.vstack(out_list)
+            return sample_list, out_list
+
+    def Ensemble_Inference(self,sample=None):
+        models = os.listdir(os.path.join(self.Name,'models'))
+        if sample is not None:
+            models = np.random.choice(models,sample,replace=False)
+        predicted = []
+        for model in models:
+            sample_list,pred = self.Inference(model=model)
+            predicted.append(pred)
+
+        predicted_dist = []
+        for p in predicted:
+            predicted_dist.append(np.expand_dims(p,0))
+        predicted_dist = np.vstack(predicted_dist)
+
+        predicted = np.mean(predicted_dist,0)
+        return predicted, sample_list
+
 
 
 

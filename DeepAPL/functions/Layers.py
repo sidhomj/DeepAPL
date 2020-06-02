@@ -8,6 +8,7 @@ class graph_object(object):
 def Get_Inputs(GO,self):
     # Setup Placeholders
     GO.X = tf.placeholder(tf.float32, [None, self.imgs.shape[1], self.imgs.shape[2], self.imgs.shape[3]], name='Input')
+    # GO.X = tf.placeholder(tf.float32, [None, self.img_dim_1, self.img_dim_2, self.img_dim_3], name='Input')
     GO.prob = tf.placeholder_with_default(0.0, shape=(), name='prob')
     GO.prob_multisample = tf.placeholder_with_default(0.0, shape=(), name='prob_multisample')
     GO.Y = tf.placeholder(dtype=tf.float32, shape=[None, self.Y.shape[1]])
@@ -83,3 +84,19 @@ def MultiSample_Dropout(X,num_masks=2,activation=tf.nn.relu,use_bias=True,
                                        kernel_regularizer=tf.contrib.layers.l1_regularizer(reg)))
     return tf.reduce_mean(tf.stack(out),0)
 
+
+def isru(x, l=-1, h=1, a=None, b=None, name='isru', axis=-1):
+    lim = 4
+    if a is None:
+        _a = h - l
+    else:
+        _a = tf.Variable(name=name + '_a', initial_value=np.ones(np.array([_.value for _ in x.shape])[axis]) + a, trainable=True, dtype=tf.float32)
+        _a = 2 ** isru(_a, l=-lim, h=lim)
+
+    if b is None:
+        _b = 1
+    else:
+        _b = tf.Variable(name=name + '_b', initial_value=np.zeros(np.array([_.value for _ in x.shape])[axis]) + b, trainable=True, dtype=tf.float32)
+        _b = (2 ** isru(_b, l=-lim, h=lim))+1
+
+    return l + (((h - l) / 2) * (1 + (x * ((_a + ((x ** 2) ** _b)) ** -(1 / (2 * _b))))))

@@ -15,9 +15,13 @@ file = 'discovery_model_all.pkl'
 
 name = 'validation_all'
 file = 'validation_model_all.pkl'
+
+name = 'discovery_model_all_mil'
+file = 'discovery_model_all_mil.pkl'
+
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
-    DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
+    DAPL.Cell_Pred,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 

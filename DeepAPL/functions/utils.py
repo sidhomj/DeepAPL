@@ -17,6 +17,7 @@ import copy
 from skimage import io
 from skimage.morphology import binary_closing, disk, binary_dilation, remove_small_objects
 import scipy.ndimage as nd
+import tensorflow as tf
 
 def Get_Images(sub_dir,sample,include_cell_types=None,exclude_cell_types=None,load_images=True,color_norm=True,nmf=False,rm_rbc=False):
 
@@ -470,3 +471,89 @@ def mean_confidence_interval(data, confidence=0.95):
     m, se = np.mean(a), scipy.stats.sem(a)
     h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
     return m, m-h, m+h,h
+
+def Run_Graph_WF(set,sess,self,GO,batch_size,random=True,
+                 train=True,drop_out_rate=None,multisample_dropout_rate=None,
+                 class_weights = None,subsample=None):
+    loss = []
+    accuracy = []
+    predicted_list = []
+    for vars in get_batches(set, batch_size=batch_size, random=random):
+        if subsample is None:
+            var_idx = np.where(np.isin(self.patients, vars[0]))[0]
+        else:
+            var_idx = []
+            if subsample is not None:
+                for p in np.unique(vars[0]):
+                    vidx = np.where(np.isin(self.patients,p))[0]
+                    if len(vidx)>subsample:
+                        vidx = np.random.choice(vidx,subsample,replace=False)
+                    var_idx.append(vidx)
+            var_idx = np.hstack(var_idx)
+
+        lb = LabelEncoder()
+        lb.fit(vars[0])
+        _,_,sample_idx = np.intersect1d(lb.classes_,vars[0],return_indices=True)
+        vars = [v[sample_idx] for v in vars]
+        i = lb.transform(self.patients[var_idx])
+
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(i.reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.Y: vars[-1],
+                     GO.sp: sp,
+                     GO.class_weights: class_weights}
+
+        feed_dict[GO.X] = self.imgs[var_idx]
+
+        if drop_out_rate is not None:
+            feed_dict[GO.prob] = drop_out_rate
+
+        if multisample_dropout_rate is not None:
+            feed_dict[GO.prob_multisample] = multisample_dropout_rate
+
+        if train:
+            loss_i, accuracy_i, _, predicted_i = sess.run([GO.loss, GO.accuracy, GO.opt, GO.predicted],
+                                                          feed_dict=feed_dict)
+        else:
+            loss_i, accuracy_i, predicted_i = sess.run([GO.loss, GO.accuracy, GO.predicted],
+                                                       feed_dict=feed_dict)
+
+        loss.append(loss_i)
+        accuracy.append(accuracy_i)
+        pred_temp = np.zeros_like(predicted_i)
+        pred_temp[sample_idx] = predicted_i
+        predicted_i = pred_temp
+        predicted_list.append(predicted_i)
+
+    loss = np.mean(loss)
+    accuracy = np.mean(accuracy)
+    predicted_out = np.vstack(predicted_list)
+    try:
+        auc = roc_auc_score(set[-1], predicted_out)
+    except:
+        auc = 0.0
+    return loss,accuracy,predicted_out,auc
+
+def Get_Cell_Pred(self,batch_size,GO,sess):
+    predicted_list = []
+    i = np.asarray(range(len(self.Y)))
+    idx = []
+    for vars in get_batches(self.test, batch_size=batch_size, random=False):
+        var_idx = np.where(np.isin(self.patients, vars[0]))[0]
+        OH = OneHotEncoder(categories='auto')
+        sp = OH.fit_transform(i[var_idx].reshape(-1, 1)).T
+        sp = sp.tocoo()
+        indices = np.mat([sp.row, sp.col]).T
+        sp = tf.SparseTensorValue(indices, sp.data, sp.shape)
+
+        feed_dict = {GO.sp: sp,
+                     GO.X: self.imgs[var_idx]}
+
+        predicted_list.append(sess.run(GO.predicted,feed_dict=feed_dict))
+        idx.append(var_idx)
+
+    return np.vstack(predicted_list),np.squeeze(np.hstack(idx))

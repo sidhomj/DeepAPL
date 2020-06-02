@@ -13,7 +13,7 @@ name = 'discovery_model_all'
 name_out = 'validation_model_all'
 
 #Load Trained Model
-gpu = 2
+gpu = 4
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_SC(data,gpu)
@@ -49,6 +49,6 @@ DAPL_train.Ensemble_Inference()
 DAPL_train.Get_Cell_Predicted()
 
 with open(name_out+'.pkl','wb') as f:
-    pickle.dump([DAPL_train.Cell_Pred,DAPL_train.w,DAPL_train.imgs,
+    pickle.dump([DAPL_train.Cell_Pred,DAPL_train.imgs,
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)

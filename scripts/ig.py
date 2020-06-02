@@ -11,26 +11,29 @@ matplotlib.rc('font', family='Times New Roman')
 from matplotlib.colors import ListedColormap
 
 
-name = 'discovery_model'
+name = 'discovery_model_all'
 
-file = 'discovery_model.pkl'
-write = 'discovery'
+file = 'discovery_model_all.pkl'
+write = 'discovery_all'
 
-file = 'validation_model_all.pkl'
-write = 'validation_all'
+# file = 'validation_model_all.pkl'
+# write = 'validation_all'
 
-gpu = 1
+file = 'discovery_model_all_mil.pkl'
+write = 'discovery_all_mil'
+
+gpu = 0
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
 DAPL = DeepAPL_SC(name,gpu)
 with open(file,'rb') as f:
-    DAPL.Cell_Pred,DAPL.w,DAPL.imgs,\
+    DAPL.Cell_Pred,_,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
 df = copy.deepcopy(DAPL.Cell_Pred)
-sel = 'APL'
+sel = 'AML'
 if sel == 'AML':
     a = 0
     b = 1
