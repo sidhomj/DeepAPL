@@ -10,10 +10,11 @@ import cv2
 from sklearn.metrics import roc_auc_score
 
 data = 'load_data'
-name = 'discovery_model_all'
+name = 'discovery_blasts'
+blasts = True
 
 #open model
-gpu = 2
+gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_SC(data,gpu)
@@ -27,10 +28,13 @@ df_meta = df_meta[df_meta['Cohort']=='Discovery']
 
 #select samples in discovery and cell types for training
 idx_samples_keep = np.isin(DAPL.patients,df_meta['JH Number'])
-# cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
-# cell_type_keep = np.isin(DAPL.cell_type,cell_types)
-# idx_keep = idx_samples_keep*cell_type_keep
-idx_keep = idx_samples_keep
+if blasts:
+    cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
+    cell_type_keep = np.isin(DAPL.cell_type,cell_types)
+    idx_keep = idx_samples_keep*cell_type_keep
+else:
+    idx_keep = idx_samples_keep
+
 label_dict = dict(zip(df_meta['JH Number'],df_meta['Diagnosis']))
 
 DAPL_train = DeepAPL_SC(name,gpu)
