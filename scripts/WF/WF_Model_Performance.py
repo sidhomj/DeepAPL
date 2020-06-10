@@ -7,15 +7,16 @@ from sklearn.metrics import roc_curve,roc_auc_score
 import seaborn as sns
 import matplotlib
 import pandas as pd
+import copy
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-name = 'discovery_model_all_mil'
-file = 'discovery_model_all_mil.pkl'
+name = 'discovery_blasts'
+file = 'discovery_blasts.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
-    DAPL.Cell_Pred,DAPL.imgs,DAPL.DFs_pred,\
+    DAPL.Cell_Pred,DAPL.DFs_pred,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
@@ -23,11 +24,12 @@ with open(file,'rb') as f:
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Label']!='out']
 
-# #convert prob to binary call
-# DAPL.Cell_Pred['APL'][DAPL.Cell_Pred['APL']>=0.80] = 1.0
-# DAPL.Cell_Pred['APL'][DAPL.Cell_Pred['APL']<0.80] = 0.0
-# DAPL.Cell_Pred['AML'] = 1 - DAPL.Cell_Pred['APL']
-
+#map patients to label
+label_dict = pd.DataFrame()
+label_dict['Patient'] = DAPL.patients
+label_dict['Label'] = DAPL.labels
+label_dict.drop_duplicates(inplace=True)
+label_dict = dict(zip(label_dict['Patient'],label_dict['Label']))
 
 #Cell Performance
 plt.figure()
@@ -53,8 +55,8 @@ plt.savefig(name+'_sc_auc.eps')
 # #Cell Predictions by Cell Type
 order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
 fig,ax = plt.subplots(figsize=(5,5))
-# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
+# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')
@@ -66,15 +68,25 @@ ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
 plt.savefig(name+'_celltype.eps')
 
-#Sample Level Performance
-DAPL.Sample_Summary()
+#Sample Level Performance MIL
+df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_test':'first','y_pred':'mean'}).reset_index()
+df_agg = df_agg[~df_agg['Samples'].str.endswith('_')]
+df_agg['Label'] = df_agg['Samples'].map(label_dict)
+df_agg.rename(columns={'y_pred':'APL'},inplace=True)
+df_agg.set_index('Samples',inplace=True)
+sample_summary = copy.deepcopy(df_agg)
+
+# #Sample Level with cell pred
+# DAPL.Sample_Summary()
+# sample_summary = copy.deepcopy(DAPL.sample_summary)
+
 plt.figure()
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate',fontsize=24)
 plt.ylabel('True Positive Rate',fontsize=24)
-y_test = np.asarray(DAPL.sample_summary['Label']) == 'APL'
-y_pred = np.asarray(DAPL.sample_summary['APL'])
+y_test = np.asarray(sample_summary['Label']) == 'APL'
+y_pred = np.asarray(sample_summary['APL'])
 roc_score = roc_auc_score(y_test,y_pred)
 fpr, tpr, th = roc_curve(y_test, y_pred)
 id = 'CNN'
@@ -92,11 +104,6 @@ df_promy_agg = df_promy.groupby(['Patient']).agg({'Pro':'sum'})
 df_promy_tc = df_promy['Patient'].value_counts().to_frame()
 df_pro = pd.concat([df_promy_agg,df_promy_tc],axis=1)
 
-label_dict = pd.DataFrame()
-label_dict['Patient'] = DAPL.patients
-label_dict['Label'] = DAPL.labels
-label_dict.drop_duplicates(inplace=True)
-label_dict = dict(zip(label_dict['Patient'],label_dict['Label']))
 df_pro['Label'] = df_pro.index.map(label_dict)
 bin_dict = {'AML':0,'APL':1}
 df_pro['Label_Bin'] = df_pro['Label'].map(bin_dict)
@@ -117,23 +124,31 @@ ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 plt.savefig(name+'_sample_auc.eps')
 
-
-#Assess performance over min number of cells per sample
-
-# #Sample Level Performance with samples >= 10 cells
+#Assess performance over number of cells per sample
 DAPL.Cell_Pred['n'] = 1
-agg = DAPL.Cell_Pred.groupby(['Patient']).agg({'Label':'first','n':'sum'})
-#
-DAPL.Sample_Summary()
+cell_counts = DAPL.Cell_Pred.groupby(['Patient']).agg({'Label':'first','n':'sum'})
+
+#MIL method
+df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_test':'first','y_pred':'mean'}).reset_index()
+df_agg = df_agg[~df_agg['Samples'].str.endswith('_')]
+df_agg['Label'] = df_agg['Samples'].map(label_dict)
+df_agg.rename(columns={'y_pred':'APL'},inplace=True)
+df_agg.set_index('Samples',inplace=True)
+sample_summary = df_agg
+
+#Cell Pred method
+# DAPL.Sample_Summary()
+# sample_summary = DAPL.sample_summary
+
 n_list = []
 auc_list = []
 auc_pro = []
 number_pos = []
 number_neg = []
-for n in range(0,np.max(agg['n'])):
+for n in range(0,np.max(cell_counts['n'])):
     try:
-        keep = np.array(list(agg[agg['n']>=n].index))
-        sample_summary_temp = DAPL.sample_summary[DAPL.sample_summary.index.isin(keep)]
+        keep = np.array(list(cell_counts[cell_counts['n']>=n].index))
+        sample_summary_temp = sample_summary[sample_summary.index.isin(keep)]
         sample_summary_temp['pro'] = sample_summary_temp.index.map(pro_dict)
         y_test = np.asarray(sample_summary_temp['Label']) == 'APL'
         y_pred = np.asarray(sample_summary_temp['APL'])
@@ -163,27 +178,4 @@ plt.yticks(fontsize=16)
 plt.legend(loc="lower right",prop={'size':16},frameon=False)
 plt.tight_layout()
 plt.savefig(name+'_auc_v_numcells.eps')
-
-
-# sns.lineplot(data=df_auc,x='number_pos',y='auc',label='APL')
-# sns.lineplot(data=df_auc,x='number_neg',y='auc',label='AML')
-# plt.ylim([0,1.1])
-# plt.xlabel('Number of Samples',fontsize=24)
-# plt.ylabel('AUC',fontsize=24)
-# plt.xticks(fontsize=16)
-# plt.yticks(fontsize=16)
-# plt.tight_layout()
-# plt.legend()
-# # plt.figure()
-# # # plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-# # plt.xlim([0.0, 1.0])
-# # plt.ylim([0.0, 1.05])
-# # plt.xlabel('False Positive Rate',fontsize=16)
-# # plt.ylabel('True Positive Rate',fontsize=16)
-# y_test = np.asarray(DAPL.sample_summary['Label']) == 'APL'
-# y_pred = np.asarray(DAPL.sample_summary['APL'])
-# roc_score = roc_auc_score(y_test,y_pred)
-# fpr, tpr, th = roc_curve(y_test, y_pred)
-# id = 'Pts >= 10 cells'
-# plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='green')
 
