@@ -18,11 +18,12 @@ write = 'discovery_blasts'
 file = 'validation_blasts.pkl'
 write = 'validation_blasts'
 
-# file = 'validation_model_all.pkl'
-# write = 'validation_all'
+name = 'discovery_all'
+file = 'discovery_all.pkl'
+write = 'discovery_all'
 
-# file = 'discovery_model_all_mil.pkl'
-# write = 'discovery_all_mil'
+file = 'validation_all.pkl'
+write = 'validation_all'
 
 gpu = 0
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
@@ -35,7 +36,7 @@ with open(file,'rb') as f:
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
 df = copy.deepcopy(DAPL.Cell_Pred)
-sel = 'AML'
+sel = 'APL'
 if sel == 'AML':
     a = 0
     b = 1
@@ -65,7 +66,7 @@ my_cmap = cmap(np.arange(cmap.N))
 my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
 my_cmap = ListedColormap(my_cmap)
 #Plot IG maps
-fig,ax = plt.subplots(3,3,figsize=(9,9))
+fig,ax = plt.subplots(3,3,figsize=(7,7))
 ax = np.ndarray.flatten(ax)
 for ii,ax_ in zip(img_idx,ax):
     img = DAPL.imgs[ii]

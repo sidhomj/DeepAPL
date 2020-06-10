@@ -15,9 +15,12 @@ file = 'discovery_blasts.pkl'
 
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
-#
-# name = 'discovery_model_all_mil'
-# file = 'discovery_model_all_mil.pkl'
+
+name = 'discovery_all'
+file = 'discovery_all.pkl'
+
+name = 'validation_all'
+file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:

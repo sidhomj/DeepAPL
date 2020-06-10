@@ -13,6 +13,10 @@ name = 'discovery_blasts'
 name_out = 'validation_blasts'
 blasts = True
 
+name = 'discovery_all'
+name_out = 'validation_all'
+blasts = False
+
 #Load Trained Model
 gpu = 4
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
