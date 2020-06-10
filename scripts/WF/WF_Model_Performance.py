@@ -10,18 +10,12 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-name = 'discovery_blasts'
-file = 'discovery_blasts.pkl'
-
-name = 'validation_blasts'
-file = 'validation_blasts.pkl'
-#
-# name = 'discovery_model_all_mil'
-# file = 'discovery_model_all_mil.pkl'
+name = 'discovery_model_all_mil'
+file = 'discovery_model_all_mil.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
-    DAPL.Cell_Pred,DAPL.imgs,\
+    DAPL.Cell_Pred,DAPL.imgs,DAPL.DFs_pred,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 

@@ -15,6 +15,9 @@ name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 write = 'discovery_blasts'
 
+file = 'validation_blasts.pkl'
+write = 'validation_blasts'
+
 # file = 'validation_model_all.pkl'
 # write = 'validation_all'
 
@@ -32,7 +35,7 @@ with open(file,'rb') as f:
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
 df = copy.deepcopy(DAPL.Cell_Pred)
-sel = 'APL'
+sel = 'AML'
 if sel == 'AML':
     a = 0
     b = 1
@@ -47,7 +50,7 @@ models = np.random.choice(range(100), 25, replace=False)
 models = ['model_' + str(x) for x in models]
 
 #Plot Representative Sequences
-fig,ax = plt.subplots(3,3,figsize=(9,9))
+fig,ax = plt.subplots(3,3,figsize=(7,7))
 ax = np.ndarray.flatten(ax)
 for ii,ax_ in zip(img_idx,ax):
     img = DAPL.imgs[ii]
