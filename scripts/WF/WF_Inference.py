@@ -9,8 +9,13 @@ warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 
 data = 'load_data'
-name = 'discovery_model_all_mil'
-name_out = 'validation_model_all_mil'
+name = 'discovery_blasts'
+name_out = 'validation_blasts'
+blasts = True
+
+# name = 'discovery_all'
+# name_out = 'validation_all'
+# blasts = False
 
 #Load Trained Model
 gpu = 3
@@ -26,10 +31,12 @@ df_meta.sort_values(by='Date of Diagnosis',inplace=True)
 df_meta = df_meta[df_meta['Cohort']=='Validation']
 
 idx_samples_keep = np.isin(DAPL.patients,df_meta['JH Number'])
-# cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
-# cell_type_keep = np.isin(DAPL.cell_type,cell_types)
-# idx_keep = idx_samples_keep*cell_type_keep
-idx_keep = idx_samples_keep
+if blasts:
+    cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
+    cell_type_keep = np.isin(DAPL.cell_type,cell_types)
+    idx_keep = idx_samples_keep*cell_type_keep
+else:
+    idx_keep = idx_samples_keep
 label_dict = dict(zip(df_meta['JH Number'],df_meta['Diagnosis']))
 
 DAPL_train = DeepAPL_WF(name,gpu)

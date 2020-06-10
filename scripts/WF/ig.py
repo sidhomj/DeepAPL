@@ -36,7 +36,7 @@ with open(file,'rb') as f:
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
 df = copy.deepcopy(DAPL.Cell_Pred)
-sel = 'APL'
+sel = 'AML'
 if sel == 'AML':
     a = 0
     b = 1
@@ -51,14 +51,14 @@ models = np.random.choice(range(100), 25, replace=False)
 models = ['model_' + str(x) for x in models]
 
 #Plot Representative Sequences
-# fig,ax = plt.subplots(3,3,figsize=(7,7))
-# ax = np.ndarray.flatten(ax)
-# for ii,ax_ in zip(img_idx,ax):
-#     img = DAPL.imgs[ii]
-#     ax_.imshow(img)
-#     ax_.set_xticks([])
-#     ax_.set_yticks([])
-# plt.tight_layout()
+fig,ax = plt.subplots(3,3,figsize=(7,7))
+ax = np.ndarray.flatten(ax)
+for ii,ax_ in zip(img_idx,ax):
+    img = DAPL.imgs[ii]
+    ax_.imshow(img)
+    ax_.set_xticks([])
+    ax_.set_yticks([])
+plt.tight_layout()
 
 cmap = plt.cm.jet
 my_cmap = cmap(np.arange(cmap.N))
