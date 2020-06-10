@@ -16,6 +16,7 @@ import scipy
 import cv2
 import matplotlib.colors as mcolors
 import h5py
+import scipy
 
 class base(object):
     def __init__(self,Name='tr_obj',device=0):
@@ -973,9 +974,17 @@ class DeepAPL_WF(base):
                     saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
                     graph = tf.get_default_graph()
                     X = graph.get_tensor_by_name('Input:0')
+                    sp_i = graph.get_tensor_by_name('sp/indices:0')
+                    sp_v = graph.get_tensor_by_name('sp/values:0')
+                    sp_s = graph.get_tensor_by_name('sp/shape:0')
+                    sp = scipy.sparse.coo_matrix(np.eye(len(img_s)))
+                    indices = np.mat([sp.row, sp.col]).T
                     pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
                     pred = pred[:,a]-pred[:,b]
-                    feed_dict = {X: img_s}
+                    feed_dict = {X: img_s,
+                                 sp_i: indices,
+                                 sp_v: sp.data,
+                                 sp_s: sp.shape}
                     preds = sess.run(pred, feed_dict=feed_dict)
                     grad = tf.abs(tf.gradients(pred,X)[0])
                     grad_out = sess.run(grad,feed_dict)
