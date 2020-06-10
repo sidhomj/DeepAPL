@@ -9,8 +9,9 @@ warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 
 data = 'load_data'
-name = 'discovery_model_all'
-name_out = 'validation_model_all'
+name = 'discovery_blasts'
+name_out = 'validation_blasts'
+blasts = True
 
 #Load Trained Model
 gpu = 4
@@ -20,16 +21,18 @@ DAPL = DeepAPL_SC(data,gpu)
 DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 
 #Get data from Validation Cohort
-df_meta = pd.read_csv('../Data/master.csv')
+df_meta = pd.read_csv('../../Data/master.csv')
 df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
 df_meta.sort_values(by='Date of Diagnosis',inplace=True)
 df_meta = df_meta[df_meta['Cohort']=='Validation']
 
 idx_samples_keep = np.isin(DAPL.patients,df_meta['JH Number'])
-# cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
-# cell_type_keep = np.isin(DAPL.cell_type,cell_types)
-# idx_keep = idx_samples_keep*cell_type_keep
-idx_keep = idx_samples_keep
+if blasts:
+    cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
+    cell_type_keep = np.isin(DAPL.cell_type,cell_types)
+    idx_keep = idx_samples_keep*cell_type_keep
+else:
+    idx_keep = idx_samples_keep
 label_dict = dict(zip(df_meta['JH Number'],df_meta['Diagnosis']))
 
 DAPL_train = DeepAPL_SC(name,gpu)

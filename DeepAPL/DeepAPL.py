@@ -956,6 +956,92 @@ class DeepAPL_WF(base):
         predicted = np.mean(predicted_dist,0)
         return predicted, sample_list
 
+    def IG(self,img,a,b,models=['model_0'],steps=100):
+        tf.reset_default_graph()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        pred_list = []
+        grad_list = []
+        with tf.Session(config=config) as sess:
+            baseline = cv2.GaussianBlur(img, (101, 101), 100)
+            inc = (img - baseline) / steps
+            img_s = [baseline + inc * i for i in range(1, steps + 1)]
+            img_s = np.stack(img_s)
+            for model in models:
+                for _ in range(1):
+                    saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models',model, 'model.ckpt.meta'))
+                    saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
+                    graph = tf.get_default_graph()
+                    X = graph.get_tensor_by_name('Input:0')
+                    pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
+                    pred = pred[:,a]-pred[:,b]
+                    feed_dict = {X: img_s}
+                    preds = sess.run(pred, feed_dict=feed_dict)
+                    grad = tf.abs(tf.gradients(pred,X)[0])
+                    grad_out = sess.run(grad,feed_dict)
+                    pred_list.append(preds)
+                    grad_list.append(grad_out)
+
+        preds = np.mean(pred_list,0)
+        grad_out = np.mean(grad_list,0)
+
+        # #show transition
+        # fig,ax = plt.subplots(5,5,figsize=(10,10))
+        # ax = np.ndarray.flatten(ax)
+        # idx = np.random.choice(range(len(img_s)),25,replace=False)
+        # idx = np.sort(idx)
+        # for ii,a in enumerate(ax):
+        #     a.imshow(img_s[idx[ii]])
+        #     a.set_xticks([])
+        #     a.set_yticks([])
+        #     a.set_title(preds[idx[ii]])
+        # #
+        #plot preds
+        # plt.figure()
+        # plt.plot(preds)
+        # #
+        # #plot grads
+        # grads = np.sum(grad_out,axis=(1,2,3))
+        # plt.figure()
+        # plt.plot(grads)
+
+        #plot att
+        att = np.sum(grad_out,axis=(0,-1))
+        att = NormalizeData(att)
+        self.grads = grad_out
+        self.ig_preds = preds
+        return att
+
+        # plt.figure()
+        # plt.imshow(img)
+        #
+        # plt.figure()
+        # plt.imshow(img)
+        # plt.imshow(att,cmap='jet',alpha=0.5)
+        #
+        # #plot image
+        # plt.figure()
+        # plt.imshow(img)
+        # colors = [(0, 1, 0, c) for c in np.linspace(0, 1, 100)]
+        # cmap = mcolors.LinearSegmentedColormap.from_list('mycmap', colors, N=8)
+        # plt.imshow(att,cmap=cmap)
+        #
+        # plt.figure()
+        # plt.imshow(att,cmap='jet')
+
+
+
+
+
+
+
+
+
+            # feed_dict = {X: np.ones_like(img)[np.newaxis,:,:,:]}
+            # # feed_dict = {X: img_noise[np.newaxis,:,:,:]}
+            # preds = sess.run(pred, feed_dict=feed_dict)
+
+
 
 
 

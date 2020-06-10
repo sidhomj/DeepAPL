@@ -10,14 +10,14 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-name = 'discovery_all'
-file = 'discovery_model_all.pkl'
+name = 'discovery_blasts'
+file = 'discovery_blasts.pkl'
 
-name = 'validation_all'
-file = 'validation_model_all.pkl'
-
-name = 'discovery_model_all_mil'
-file = 'discovery_model_all_mil.pkl'
+# name = 'validation_all'
+# file = 'validation_model_all.pkl'
+#
+# name = 'discovery_model_all_mil'
+# file = 'discovery_model_all_mil.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:

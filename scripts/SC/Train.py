@@ -10,8 +10,11 @@ import cv2
 from sklearn.metrics import roc_auc_score
 
 data = 'load_data'
-name = 'discovery_blasts'
-blasts = True
+# name = 'discovery_blasts'
+# blasts = True
+
+name = 'discovery_all'
+blasts = False
 
 #open model
 gpu = 1
@@ -21,7 +24,7 @@ DAPL = DeepAPL_SC(data,gpu)
 DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 
 #load metadata & select data in discovery cohort for training
-df_meta = pd.read_csv('../Data/master.csv')
+df_meta = pd.read_csv('../../Data/master.csv')
 df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
 df_meta.sort_values(by='Date of Diagnosis',inplace=True)
 df_meta = df_meta[df_meta['Cohort']=='Discovery']
