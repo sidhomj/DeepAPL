@@ -49,7 +49,6 @@ df = df[df['Label'] == sel]
 img_idx = np.array(df.index)[100:109]
 np.random.seed(0)
 models = np.random.choice(range(100), 25, replace=False)
-models = np.random.choice(range(10), 10, replace=False)
 models = ['model_' + str(x) for x in models]
 
 #Plot Representative Sequences
@@ -62,11 +61,11 @@ for ii,ax_ in zip(img_idx,ax):
     ax_.set_yticks([])
 plt.tight_layout()
 
+#PLot IG
 cmap = plt.cm.jet
 my_cmap = cmap(np.arange(cmap.N))
 my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
 my_cmap = ListedColormap(my_cmap)
-#Plot IG maps
 fig,ax = plt.subplots(3,3,figsize=(7,7))
 ax = np.ndarray.flatten(ax)
 for ii,ax_ in zip(img_idx,ax):
