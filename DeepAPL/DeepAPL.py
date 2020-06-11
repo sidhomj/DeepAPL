@@ -739,20 +739,22 @@ class DeepAPL_WF(base):
                 GO.w = tf.identity(GO.w,'w')
                 fc =  tf.reduce_max(GO.w, [1, 2])
                 fc = tf.layers.dense(fc,64,tf.nn.relu)
+                fc = tf.layers.dense(fc,GO.Y.shape[1])
+                GO.cell_pred = tf.nn.softmax(fc,name='cell_pred')
                 # fc = tf.layers.dense(fc,12,lambda x: isru(x, l=0, h=1, a=0, b=0))
                 sum = tf.sparse.reduce_sum(GO.sp,1)
                 sum.set_shape([GO.sp.shape[0], ])
                 sum = tf.expand_dims(sum, -1)
-                fc = tf.sparse.matmul(GO.sp, fc)/sum
+                GO.logits = tf.sparse.matmul(GO.sp, fc)/sum
 
-                if multisample_dropout_num_masks is not None:
-                    GO.logits = MultiSample_Dropout(X=fc,
-                                               num_masks=multisample_dropout_num_masks,
-                                               units=GO.Y.shape[1],
-                                               rate=GO.prob_multisample,
-                                               activation=None)
-                else:
-                    GO.logits = tf.layers.dense(fc, GO.Y.shape[1])
+                # if multisample_dropout_num_masks is not None:
+                #     GO.logits = MultiSample_Dropout(X=fc,
+                #                                num_masks=multisample_dropout_num_masks,
+                #                                units=GO.Y.shape[1],
+                #                                rate=GO.prob_multisample,
+                #                                activation=None)
+                # else:
+                #     GO.logits = tf.layers.dense(fc, GO.Y.shape[1])
 
                 if weight_by_class:
                     weights = tf.squeeze(tf.matmul(tf.cast(GO.Y, dtype='float32'), GO.class_weights, transpose_b=True), axis=1)
@@ -917,9 +919,12 @@ class DeepAPL_WF(base):
             sp_s = graph.get_tensor_by_name('sp/shape:0')
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
+            cell_pred = graph.get_tensor_by_name('cell_pred:0')
 
             out_list = []
             sample_list = np.unique(self.patients)
+            cell_pred_list = []
+            var_idx_list = []
             for vars in get_batches([sample_list], batch_size=batch_size, random=False):
                 var_idx = np.where(np.isin(self.patients, vars[0]))[0]
                 lb = LabelEncoder()
@@ -935,26 +940,54 @@ class DeepAPL_WF(base):
                              sp_i: indices,
                              sp_v: sp.data,
                              sp_s: sp.shape}
-                out_list.append(sess.run(pred, feed_dict=feed_dict))
+                pred_i,cell_pred_i = sess.run([pred,cell_pred],feed_dict=feed_dict)
+                out_list.append(pred_i)
+                cell_pred_list.append(cell_pred_i)
+                var_idx_list.append(var_idx)
 
             out_list = np.vstack(out_list)
-            return sample_list, out_list
+            cell_pred_out = np.vstack(cell_pred_list)
+            var_idx_out = np.hstack(var_idx)
+            cell_pred_temp = np.zeros_like(cell_pred_out)
+            cell_pred_temp[var_idx_out] = cell_pred_out
+            cell_pred_out = cell_pred_temp
+            return sample_list, out_list, cell_pred_out
 
     def Ensemble_Inference(self,sample=None):
         models = os.listdir(os.path.join(self.Name,'models'))
         if sample is not None:
             models = np.random.choice(models,sample,replace=False)
         predicted = []
+        cell_predicted = []
         for model in models:
-            sample_list,pred = self.Inference(model=model)
+            sample_list,pred,cell_pred = self.Inference(model=model)
             predicted.append(pred)
+            cell_predicted.append(cell_pred)
 
         predicted_dist = []
         for p in predicted:
             predicted_dist.append(np.expand_dims(p,0))
         predicted_dist = np.vstack(predicted_dist)
 
+        cell_predicted_dist = []
+        for p in cell_predicted:
+            cell_predicted_dist.append(np.expand_dims(p,0))
+        cell_predicted_dist = np.vstack(cell_predicted_dist)
+
         predicted = np.mean(predicted_dist,0)
+        cell_predicted = np.mean(cell_predicted_dist,0)
+        self.predicted = cell_predicted
+        self.counts = np.ones_like(self.predicted)*len(models)
+
+        DFs =[]
+        for ii,c in enumerate(self.lb.classes_,0):
+            df_out = pd.DataFrame()
+            df_out['Samples'] = sample_list
+            df_out['y_pred'] = predicted[:,ii]
+            DFs.append(df_out)
+
+        self.DFs_pred = dict(zip(self.lb.classes_,DFs))
+
         return predicted, sample_list
 
     def IG(self,img,a,b,models=['model_0'],steps=100):
@@ -974,17 +1007,9 @@ class DeepAPL_WF(base):
                     saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
                     graph = tf.get_default_graph()
                     X = graph.get_tensor_by_name('Input:0')
-                    sp_i = graph.get_tensor_by_name('sp/indices:0')
-                    sp_v = graph.get_tensor_by_name('sp/values:0')
-                    sp_s = graph.get_tensor_by_name('sp/shape:0')
-                    sp = scipy.sparse.coo_matrix(np.eye(len(img_s)))
-                    indices = np.mat([sp.row, sp.col]).T
-                    pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
+                    pred = graph.get_tensor_by_name('cell_pred:0')
                     pred = pred[:,a]-pred[:,b]
-                    feed_dict = {X: img_s,
-                                 sp_i: indices,
-                                 sp_v: sp.data,
-                                 sp_s: sp.shape}
+                    feed_dict = {X: img_s}
                     preds = sess.run(pred, feed_dict=feed_dict)
                     grad = tf.abs(tf.gradients(pred,X)[0])
                     grad_out = sess.run(grad,feed_dict)

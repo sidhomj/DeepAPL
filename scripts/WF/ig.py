@@ -49,6 +49,7 @@ df = df[df['Label'] == sel]
 img_idx = np.array(df.index)[100:109]
 np.random.seed(0)
 models = np.random.choice(range(100), 25, replace=False)
+models = np.random.choice(range(10), 10, replace=False)
 models = ['model_' + str(x) for x in models]
 
 #Plot Representative Sequences
