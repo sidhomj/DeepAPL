@@ -15,8 +15,8 @@ name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 write = 'discovery_blasts'
 
-# file = 'validation_blasts.pkl'
-# write = 'validation_blasts'
+file = 'validation_blasts.pkl'
+write = 'validation_blasts'
 
 # name = 'discovery_all'
 # file = 'discovery_all.pkl'
@@ -45,7 +45,8 @@ else:
     b = 0
 df.sort_values(by=sel, inplace=True, ascending=False)
 df = df[df['Label'] == sel]
-img_idx = np.array(df.index)[0:9]
+
+img_idx = np.array(df.index)[100:109]
 np.random.seed(0)
 models = np.random.choice(range(100), 25, replace=False)
 models = ['model_' + str(x) for x in models]
@@ -75,6 +76,5 @@ for ii,ax_ in zip(img_idx,ax):
     ax_.imshow(att,cmap=my_cmap,alpha=0.5,vmax=vmax,vmin=vmin)
     ax_.set_xticks([])
     ax_.set_yticks([])
-    # ax_.set_title(str(np.round(df.loc[ii][sel],3)))
 plt.tight_layout()
 

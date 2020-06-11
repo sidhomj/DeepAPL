@@ -13,14 +13,14 @@ gpu = 1
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 
-name = 'validation_blasts'
-file = 'validation_blasts.pkl'
-
-name = 'discovery_all'
-file = 'discovery_all.pkl'
-
-name = 'validation_all'
-file = 'validation_all.pkl'
+# name = 'validation_blasts'
+# file = 'validation_blasts.pkl'
+#
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
+#
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:

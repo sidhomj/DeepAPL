@@ -13,8 +13,8 @@ data = 'load_data'
 name = 'discovery_blasts'
 blasts = True
 
-name = 'discovery_all'
-blasts = False
+# name = 'discovery_all'
+# blasts = False
 
 #open model
 gpu = 2

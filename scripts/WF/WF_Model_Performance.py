@@ -14,6 +14,15 @@ gpu = 1
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 
+name = 'validation_blasts'
+file = 'validation_blasts.pkl'
+#
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
+#
+# name = 'validation_all'
+# file = 'validation_all.pkl'
+
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.DFs_pred,DAPL.imgs,\
@@ -69,7 +78,7 @@ ax.tick_params(axis='x', which=u'both',length=0)
 plt.savefig(name+'_celltype.eps')
 
 #Sample Level Performance MIL
-df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_test':'first','y_pred':'mean'}).reset_index()
+df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_pred':'mean'}).reset_index()
 df_agg = df_agg[~df_agg['Samples'].str.endswith('_')]
 df_agg['Label'] = df_agg['Samples'].map(label_dict)
 df_agg.rename(columns={'y_pred':'APL'},inplace=True)
@@ -129,7 +138,7 @@ DAPL.Cell_Pred['n'] = 1
 cell_counts = DAPL.Cell_Pred.groupby(['Patient']).agg({'Label':'first','n':'sum'})
 
 #MIL method
-df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_test':'first','y_pred':'mean'}).reset_index()
+df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_pred':'mean'}).reset_index()
 df_agg = df_agg[~df_agg['Samples'].str.endswith('_')]
 df_agg['Label'] = df_agg['Samples'].map(label_dict)
 df_agg.rename(columns={'y_pred':'APL'},inplace=True)
