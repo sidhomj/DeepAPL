@@ -11,9 +11,9 @@ matplotlib.rc('font', family='Times New Roman')
 from matplotlib.colors import ListedColormap
 
 
-name = 'discovery_blasts'
-file = 'discovery_blasts.pkl'
-write = 'discovery_blasts'
+name = 'discovery_blasts_2'
+file = 'discovery_blasts_2.pkl'
+write = 'discovery_blasts_2'
 
 file = 'validation_blasts.pkl'
 write = 'validation_blasts'
@@ -36,7 +36,7 @@ with open(file,'rb') as f:
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
 df = copy.deepcopy(DAPL.Cell_Pred)
-sel = 'AML'
+sel = 'APL'
 if sel == 'AML':
     a = 0
     b = 1
@@ -46,7 +46,7 @@ else:
 df.sort_values(by=sel, inplace=True, ascending=False)
 df = df[df['Label'] == sel]
 
-img_idx = np.array(df.index)[100:109]
+img_idx = np.array(df.index)[0:9]
 np.random.seed(0)
 models = np.random.choice(range(100), 25, replace=False)
 models = ['model_' + str(x) for x in models]

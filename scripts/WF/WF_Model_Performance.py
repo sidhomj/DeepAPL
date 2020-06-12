@@ -11,8 +11,8 @@ import copy
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-name = 'discovery_blasts'
-file = 'discovery_blasts.pkl'
+name = 'discovery_blasts_2'
+file = 'discovery_blasts_2.pkl'
 
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'

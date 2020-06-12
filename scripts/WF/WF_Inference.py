@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 
 data = 'load_data'
-name = 'discovery_blasts'
+name = 'discovery_blasts_2'
 name_out = 'validation_blasts'
 blasts = True
 
@@ -18,7 +18,7 @@ blasts = True
 # blasts = False
 
 #Load Trained Model
-gpu = 3
+gpu = 4
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_WF(data,gpu)
@@ -29,6 +29,7 @@ df_meta = pd.read_csv('../../Data/master.csv')
 df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
 df_meta.sort_values(by='Date of Diagnosis',inplace=True)
 df_meta = df_meta[df_meta['Cohort']=='Validation']
+
 
 idx_samples_keep = np.isin(DAPL.patients,df_meta['JH Number'])
 if blasts:
