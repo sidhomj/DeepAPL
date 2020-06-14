@@ -13,9 +13,9 @@ name = 'discovery_blasts_2'
 name_out = 'validation_blasts'
 blasts = True
 
-# name = 'discovery_all'
-# name_out = 'validation_all'
-# blasts = False
+name = 'discovery_all'
+name_out = 'validation_all'
+blasts = False
 
 #Load Trained Model
 gpu = 4

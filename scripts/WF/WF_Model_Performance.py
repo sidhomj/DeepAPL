@@ -17,11 +17,11 @@ file = 'discovery_blasts_2.pkl'
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
 #
-# name = 'discovery_all'
-# file = 'discovery_all.pkl'
+name = 'discovery_all'
+file = 'discovery_all.pkl'
 #
-# name = 'validation_all'
-# file = 'validation_all.pkl'
+name = 'validation_all'
+file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -64,8 +64,8 @@ plt.savefig(name+'_sc_auc.eps')
 # #Cell Predictions by Cell Type
 order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
 fig,ax = plt.subplots(figsize=(5,5))
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
-# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
+# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')

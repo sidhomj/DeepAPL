@@ -18,12 +18,12 @@ write = 'discovery_blasts_2'
 file = 'validation_blasts.pkl'
 write = 'validation_blasts'
 
-# name = 'discovery_all'
-# file = 'discovery_all.pkl'
-# write = 'discovery_all'
+name = 'discovery_all'
+file = 'discovery_all.pkl'
+write = 'discovery_all'
 #
-# file = 'validation_all.pkl'
-# write = 'validation_all'
+file = 'validation_all.pkl'
+write = 'validation_all'
 
 gpu = 0
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
