@@ -11,17 +11,19 @@ import copy
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
-name = 'discovery_blasts_2'
-file = 'discovery_blasts_2.pkl'
+blasts = True
+name = 'discovery_blasts'
+file = 'discovery_blasts.pkl'
 
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
-#
+
+blasts = False
 name = 'discovery_all'
 file = 'discovery_all.pkl'
 #
-name = 'validation_all'
-file = 'validation_all.pkl'
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -62,10 +64,13 @@ ax.tick_params(axis='y', labelsize=16)
 plt.savefig(name+'_sc_auc.eps')
 
 # #Cell Predictions by Cell Type
-order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
-fig,ax = plt.subplots(figsize=(5,5))
-# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
+if blasts:
+    fig, ax = plt.subplots(figsize=(5, 5))
+    order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte']
+else:
+    fig, ax = plt.subplots(figsize=(15, 8))
+    order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({'APL':'mean'}).sort_values(by='APL').index
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')
@@ -75,6 +80,7 @@ plt.tight_layout()
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
+plt.tight_layout()
 plt.savefig(name+'_celltype.eps')
 
 #Sample Level Performance MIL
@@ -84,10 +90,6 @@ df_agg['Label'] = df_agg['Samples'].map(label_dict)
 df_agg.rename(columns={'y_pred':'APL'},inplace=True)
 df_agg.set_index('Samples',inplace=True)
 sample_summary = copy.deepcopy(df_agg)
-
-# #Sample Level with cell pred
-# DAPL.Sample_Summary()
-# sample_summary = copy.deepcopy(DAPL.sample_summary)
 
 plt.figure()
 plt.xlim([0.0, 1.0])
@@ -145,9 +147,6 @@ df_agg.rename(columns={'y_pred':'APL'},inplace=True)
 df_agg.set_index('Samples',inplace=True)
 sample_summary = df_agg
 
-#Cell Pred method
-# DAPL.Sample_Summary()
-# sample_summary = DAPL.sample_summary
 
 n_list = []
 auc_list = []
