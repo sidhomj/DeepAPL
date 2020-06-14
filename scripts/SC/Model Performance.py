@@ -10,12 +10,14 @@ import pandas as pd
 matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
+blasts = True
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 
 # name = 'validation_blasts'
 # file = 'validation_blasts.pkl'
 #
+# blasts = False
 # name = 'discovery_all'
 # file = 'discovery_all.pkl'
 #
@@ -31,12 +33,6 @@ with open(file,'rb') as f:
 #remove cells that do not have training data or are in the blurred out group
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Label']!='out']
-
-# #convert prob to binary call
-# DAPL.Cell_Pred['APL'][DAPL.Cell_Pred['APL']>=0.80] = 1.0
-# DAPL.Cell_Pred['APL'][DAPL.Cell_Pred['APL']<0.80] = 0.0
-# DAPL.Cell_Pred['AML'] = 1 - DAPL.Cell_Pred['APL']
-
 
 #Cell Performance
 plt.figure()
@@ -60,10 +56,13 @@ ax.tick_params(axis='y', labelsize=16)
 plt.savefig(name+'_sc_auc.eps')
 
 # #Cell Predictions by Cell Type
-order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte', ]
-fig,ax = plt.subplots(figsize=(5,5))
-# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
-sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax)
+if blasts:
+    fig, ax = plt.subplots(figsize=(5, 5))
+    order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte']
+else:
+    fig, ax = plt.subplots(figsize=(15, 8))
+    order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({'APL':'mean'}).sort_values(by='APL').index
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('Probability of APL',fontsize=24)
 ax.xaxis.set_ticks_position('top')
@@ -73,7 +72,9 @@ plt.tight_layout()
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
+plt.tight_layout()
 plt.savefig(name+'_celltype.eps')
+
 
 #Sample Level Performance
 DAPL.Sample_Summary()
@@ -126,7 +127,6 @@ ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 plt.savefig(name+'_sample_auc.eps')
 
-
 #Assess performance over min number of cells per sample
 
 # #Sample Level Performance with samples >= 10 cells
@@ -172,27 +172,4 @@ plt.yticks(fontsize=16)
 plt.legend(loc="lower right",prop={'size':16},frameon=False)
 plt.tight_layout()
 plt.savefig(name+'_auc_v_numcells.eps')
-
-
-# sns.lineplot(data=df_auc,x='number_pos',y='auc',label='APL')
-# sns.lineplot(data=df_auc,x='number_neg',y='auc',label='AML')
-# plt.ylim([0,1.1])
-# plt.xlabel('Number of Samples',fontsize=24)
-# plt.ylabel('AUC',fontsize=24)
-# plt.xticks(fontsize=16)
-# plt.yticks(fontsize=16)
-# plt.tight_layout()
-# plt.legend()
-# # plt.figure()
-# # # plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-# # plt.xlim([0.0, 1.0])
-# # plt.ylim([0.0, 1.05])
-# # plt.xlabel('False Positive Rate',fontsize=16)
-# # plt.ylabel('True Positive Rate',fontsize=16)
-# y_test = np.asarray(DAPL.sample_summary['Label']) == 'APL'
-# y_pred = np.asarray(DAPL.sample_summary['APL'])
-# roc_score = roc_auc_score(y_test,y_pred)
-# fpr, tpr, th = roc_curve(y_test, y_pred)
-# id = 'Pts >= 10 cells'
-# plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='green')
 
