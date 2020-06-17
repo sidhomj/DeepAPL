@@ -23,6 +23,7 @@ tpr_list = []
 fpr_list = []
 for file in files:
     df = pd.read_csv(file)
+    df['call'] = df['call'].str.upper()
     df['label'] = df['patient'].map(key_dict)
     df['y_pred'] = (df['call']=='APL').astype(int)
     df['y_test'] = (df['label']=='APL').astype(int)
@@ -108,5 +109,5 @@ ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 
 
-plt.scatter(fpr_list,tpr_list,c='r',marker='+')
+plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=100)
 

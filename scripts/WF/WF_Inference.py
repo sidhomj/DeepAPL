@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 
 data = 'load_data'
-name = 'discovery_blasts_2'
+name = 'discovery_blasts'
 name_out = 'validation_blasts'
 blasts = True
 

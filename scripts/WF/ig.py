@@ -11,9 +11,9 @@ matplotlib.rc('font', family='Times New Roman')
 from matplotlib.colors import ListedColormap
 
 
-name = 'discovery_blasts_2'
-file = 'discovery_blasts_2.pkl'
-write = 'discovery_blasts_2'
+name = 'discovery_blasts'
+file = 'discovery_blasts.pkl'
+write = 'discovery_blasts'
 
 file = 'validation_blasts.pkl'
 write = 'validation_blasts'
@@ -24,6 +24,8 @@ write = 'discovery_all'
 #
 file = 'validation_all.pkl'
 write = 'validation_all'
+
+file = 'clinical_case.pkl'
 
 gpu = 0
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
@@ -36,7 +38,7 @@ with open(file,'rb') as f:
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
 df = copy.deepcopy(DAPL.Cell_Pred)
-sel = 'APL'
+sel = 'AML'
 if sel == 'AML':
     a = 0
     b = 1
