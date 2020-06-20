@@ -16,13 +16,13 @@ file = 'discovery_blasts.pkl'
 
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
-# #
-blasts = False
-name = 'discovery_all'
-file = 'discovery_all.pkl'
 # # #
-name = 'validation_all'
-file = 'validation_all.pkl'
+# blasts = False
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
+# # # #
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -64,11 +64,11 @@ else:
     order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({'APL':'mean'}).sort_values(by='APL').index
 sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
-plt.ylabel('Probability of APL',fontsize=24)
+plt.ylabel('P(APL)',fontsize=24)
 ax.xaxis.set_ticks_position('top')
 plt.xticks(rotation=-45,fontsize=16)
 plt.yticks(fontsize=16)
-plt.tight_layout()
+plt.ylim([0,1])
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
