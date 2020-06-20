@@ -18,12 +18,12 @@ write = 'discovery_blasts'
 file = 'validation_blasts.pkl'
 write = 'validation_blasts'
 
-name = 'discovery_all'
-file = 'discovery_all.pkl'
-write = 'discovery_all'
-
-file = 'validation_all.pkl'
-write = 'validation_all'
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
+# write = 'discovery_all'
+#
+# file = 'validation_all.pkl'
+# write = 'validation_all'
 
 gpu = 0
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
@@ -58,10 +58,17 @@ for ii,ax_ in zip(img_idx,ax):
     ax_.imshow(img)
     ax_.set_xticks([])
     ax_.set_yticks([])
-    # ax_.set_title(str(np.round(df.loc[ii][sel],3)))
+    ax_.set_axis_off()
 plt.tight_layout()
+plt.savefig(write+'_'+sel+'.tif',dpi=1200,transparent=True)
 
-cmap = plt.cm.jet
+
+cvals = [0, 1]
+colors = ['lime', 'lime']
+norm = plt.Normalize(min(cvals), max(cvals))
+tuples = list(zip(map(norm, cvals), colors))
+cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", tuples)
+
 my_cmap = cmap(np.arange(cmap.N))
 my_cmap[:,-1] = np.linspace(0, 1, cmap.N)
 my_cmap = ListedColormap(my_cmap)
@@ -76,6 +83,8 @@ for ii,ax_ in zip(img_idx,ax):
     ax_.imshow(att,cmap=my_cmap,alpha=0.5,vmax=vmax,vmin=vmin)
     ax_.set_xticks([])
     ax_.set_yticks([])
-    # ax_.set_title(str(np.round(df.loc[ii][sel],3)))
+    ax_.set_axis_off()
 plt.tight_layout()
+plt.savefig(write+'_'+sel+'_att.tif',dpi=1200,transparent=True)
+
 

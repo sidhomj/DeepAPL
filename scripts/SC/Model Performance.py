@@ -14,13 +14,13 @@ blasts = True
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 
-# name = 'validation_blasts'
-# file = 'validation_blasts.pkl'
-#
+name = 'validation_blasts'
+file = 'validation_blasts.pkl'
+# #
 blasts = False
 name = 'discovery_all'
 file = 'discovery_all.pkl'
-#
+# # #
 name = 'validation_all'
 file = 'validation_all.pkl'
 
@@ -53,7 +53,7 @@ optimal_threshold = th[optimal_idx]
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-plt.savefig(name+'_sc_auc.eps')
+plt.savefig(name+'_sc_auc.eps',transparent=True)
 
 # #Cell Predictions by Cell Type
 if blasts:
@@ -73,7 +73,7 @@ ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
 plt.tight_layout()
-plt.savefig(name+'_celltype.eps')
+plt.savefig(name+'_celltype.eps',transparent=True)
 
 
 #Sample Level Performance
@@ -125,7 +125,7 @@ plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-plt.savefig(name+'_sample_auc.eps')
+plt.savefig(name+'_sample_auc.eps',transparent=True)
 
 #Assess performance over min number of cells per sample
 
