@@ -741,7 +741,6 @@ class DeepAPL_WF(base):
                 fc = tf.layers.dense(fc,64,tf.nn.relu)
                 fc = tf.layers.dense(fc,GO.Y.shape[1])
                 GO.cell_pred = tf.nn.softmax(fc,name='cell_pred')
-                # fc = tf.layers.dense(fc,12,lambda x: isru(x, l=0, h=1, a=0, b=0))
                 sum = tf.sparse.reduce_sum(GO.sp,1)
                 sum.set_shape([GO.sp.shape[0], ])
                 sum = tf.expand_dims(sum, -1)
