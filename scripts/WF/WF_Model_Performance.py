@@ -17,13 +17,13 @@ file = 'discovery_blasts.pkl'
 
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
-
+#
 blasts = False
 name = 'discovery_all'
 file = 'discovery_all.pkl'
 #
-# name = 'validation_all'
-# file = 'validation_all.pkl'
+name = 'validation_all'
+file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -61,7 +61,7 @@ optimal_threshold = th[optimal_idx]
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-plt.savefig(name+'_sc_auc.eps')
+plt.savefig(name+'_sc_auc.eps',transparent=True)
 
 # #Cell Predictions by Cell Type
 if blasts:
@@ -72,16 +72,16 @@ else:
     order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({'APL':'mean'}).sort_values(by='APL').index
 sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
-plt.ylabel('Probability of APL',fontsize=24)
+plt.ylabel('P(APL)',fontsize=24)
 ax.xaxis.set_ticks_position('top')
 plt.xticks(rotation=-45,fontsize=16)
 plt.yticks(fontsize=16)
-plt.tight_layout()
+plt.ylim([0,1])
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
 ax.tick_params(axis='x', which=u'both',length=0)
 plt.tight_layout()
-plt.savefig(name+'_celltype.eps')
+plt.savefig(name+'_celltype.eps',transparent=True)
 
 #Sample Level Performance MIL
 df_agg = DAPL.DFs_pred['APL'].groupby(['Samples']).agg({'y_pred':'mean'}).reset_index()
@@ -133,7 +133,7 @@ plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-plt.savefig(name+'_sample_auc.eps')
+plt.savefig(name+'_sample_auc.eps',transparent=True)
 
 #Assess performance over number of cells per sample
 DAPL.Cell_Pred['n'] = 1
