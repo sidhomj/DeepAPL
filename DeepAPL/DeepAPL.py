@@ -635,61 +635,11 @@ class DeepAPL_SC(base):
         preds = np.mean(pred_list,0)
         grad_out = np.mean(grad_list,0)
 
-        # #show transition
-        # fig,ax = plt.subplots(5,5,figsize=(10,10))
-        # ax = np.ndarray.flatten(ax)
-        # idx = np.random.choice(range(len(img_s)),25,replace=False)
-        # idx = np.sort(idx)
-        # for ii,a in enumerate(ax):
-        #     a.imshow(img_s[idx[ii]])
-        #     a.set_xticks([])
-        #     a.set_yticks([])
-        #     a.set_title(preds[idx[ii]])
-        # #
-        #plot preds
-        # plt.figure()
-        # plt.plot(preds)
-        # #
-        # #plot grads
-        # grads = np.sum(grad_out,axis=(1,2,3))
-        # plt.figure()
-        # plt.plot(grads)
-
-        #plot att
         att = np.sum(grad_out,axis=(0,-1))
         att = NormalizeData(att)
         self.grads = grad_out
         self.ig_preds = preds
         return att
-
-        # plt.figure()
-        # plt.imshow(img)
-        #
-        # plt.figure()
-        # plt.imshow(img)
-        # plt.imshow(att,cmap='jet',alpha=0.5)
-        #
-        # #plot image
-        # plt.figure()
-        # plt.imshow(img)
-        # colors = [(0, 1, 0, c) for c in np.linspace(0, 1, 100)]
-        # cmap = mcolors.LinearSegmentedColormap.from_list('mycmap', colors, N=8)
-        # plt.imshow(att,cmap=cmap)
-        #
-        # plt.figure()
-        # plt.imshow(att,cmap='jet')
-
-
-
-
-
-
-
-
-
-            # feed_dict = {X: np.ones_like(img)[np.newaxis,:,:,:]}
-            # # feed_dict = {X: img_noise[np.newaxis,:,:,:]}
-            # preds = sess.run(pred, feed_dict=feed_dict)
 
 class DeepAPL_WF(base):
     def Get_Train_Valid_Test(self,test_size=0.25,combine_train_valid=False,train_all=False):
@@ -1017,62 +967,12 @@ class DeepAPL_WF(base):
         preds = np.mean(pred_list,0)
         grad_out = np.mean(grad_list,0)
 
-        # #show transition
-        # fig,ax = plt.subplots(5,5,figsize=(10,10))
-        # ax = np.ndarray.flatten(ax)
-        # idx = np.random.choice(range(len(img_s)),25,replace=False)
-        # idx = np.sort(idx)
-        # for ii,a in enumerate(ax):
-        #     a.imshow(img_s[idx[ii]])
-        #     a.set_xticks([])
-        #     a.set_yticks([])
-        #     a.set_title(preds[idx[ii]])
-        # #
-        #plot preds
-        # plt.figure()
-        # plt.plot(preds)
-        # #
-        # #plot grads
-        # grads = np.sum(grad_out,axis=(1,2,3))
-        # plt.figure()
-        # plt.plot(grads)
-
         #plot att
         att = np.sum(grad_out,axis=(0,-1))
         att = NormalizeData(att)
         self.grads = grad_out
         self.ig_preds = preds
         return att
-
-        # plt.figure()
-        # plt.imshow(img)
-        #
-        # plt.figure()
-        # plt.imshow(img)
-        # plt.imshow(att,cmap='jet',alpha=0.5)
-        #
-        # #plot image
-        # plt.figure()
-        # plt.imshow(img)
-        # colors = [(0, 1, 0, c) for c in np.linspace(0, 1, 100)]
-        # cmap = mcolors.LinearSegmentedColormap.from_list('mycmap', colors, N=8)
-        # plt.imshow(att,cmap=cmap)
-        #
-        # plt.figure()
-        # plt.imshow(att,cmap='jet')
-
-
-
-
-
-
-
-
-
-            # feed_dict = {X: np.ones_like(img)[np.newaxis,:,:,:]}
-            # # feed_dict = {X: img_noise[np.newaxis,:,:,:]}
-            # preds = sess.run(pred, feed_dict=feed_dict)
-
 
 
 
