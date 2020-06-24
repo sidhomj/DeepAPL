@@ -12,5 +12,6 @@ for dir in dirs:
     os.rename('../Data_Pub/All/'+dir,'../Data_Pub/All/'+label_dict[dir])
 
 df_meta.to_csv('../Data/master_key.csv',index=False)
-df_meta.drop(columns=['JH Number'],inplace=True)
+# df_meta.drop(columns=['JH Number'],inplace=True)
+df_meta =df_meta[['Patient_ID', 'Diagnosis', 'Cohort','Age at Diagnosis', 'Gender']]
 df_meta.to_csv('../Data_Pub/master.csv',index=False)
