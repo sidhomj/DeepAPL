@@ -40,16 +40,17 @@ with open(name_out+'.pkl','wb') as f:
 DAPL = DAPL_train
 import seaborn as sns
 blasts = False
+cl = 'AML'
 if blasts:
     fig, ax = plt.subplots(figsize=(5, 5))
     order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte']
 else:
     fig, ax = plt.subplots(figsize=(15, 8))
-    order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({'APL':'mean'}).sort_values(by='APL').index
-# sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
-sns.boxplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',ax=ax,order=order)
+    order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({cl:'mean'}).sort_values(by=cl).index
+sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y=cl,cut=0,ax=ax,order=order,width=5)
+# sns.boxplot(data=DAPL.Cell_Pred,x='Cell_Type',y='AML',ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
-plt.ylabel('P(APL)',fontsize=24)
+plt.ylabel('P('+cl+')',fontsize=24)
 ax.xaxis.set_ticks_position('top')
 plt.xticks(rotation=-45,fontsize=16)
 plt.yticks(fontsize=16)
@@ -60,5 +61,6 @@ ax.tick_params(axis='x', which=u'both',length=0)
 plt.tight_layout()
 plt.savefig(name_out+'_celltype.eps',transparent=True)
 
-plt.hist(DAPL.Cell_Pred['APL'])
+plt.hist(DAPL.Cell_Pred['AML'],100)
+DAPL.Cell_Pred.sort_values(by='AML',inplace=True,ascending=False)
 

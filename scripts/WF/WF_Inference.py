@@ -13,8 +13,8 @@ name = 'discovery_blasts'
 name_out = 'validation_blasts'
 blasts = True
 
-name = 'discovery_all'
-name_out = 'validation_all'
+name = 'discovery_all_2'
+name_out = 'validation_all_2'
 blasts = False
 
 #Load Trained Model

@@ -36,7 +36,7 @@ for file in files:
 
 
 name = 'validation_all'
-file = 'WF/validation_all.pkl'
+file = 'WF/validation_all_2.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -107,7 +107,5 @@ plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-
-
-plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=100)
+plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500)
 

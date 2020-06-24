@@ -738,7 +738,6 @@ class DeepAPL_WF(base):
                 GO.w = Features
                 GO.w = tf.identity(GO.w,'w')
                 fc =  tf.reduce_max(GO.w, [1, 2])
-                fc = tf.layers.dense(fc,64,tf.nn.relu)
                 fc = tf.layers.dense(fc,GO.Y.shape[1])
                 GO.cell_pred = tf.nn.softmax(fc,name='cell_pred')
                 sum = tf.sparse.reduce_sum(GO.sp,1)
