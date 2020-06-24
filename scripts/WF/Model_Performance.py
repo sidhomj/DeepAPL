@@ -12,18 +12,18 @@ matplotlib.rc('font', family='Times New Roman')
 gpu = 1
 
 blasts = True
-name = 'discovery_blasts_2'
-file = 'discovery_blasts_2.pkl'
+name = 'discovery_blasts'
+file = 'discovery_blasts.pkl'
 
 # name = 'validation_blasts'
 # file = 'validation_blasts.pkl'
 # #
 # blasts = False
-# name = 'discovery_all_2'
-# file = 'discovery_all_2.pkl'
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
 #
-# name = 'validation_all_2'
-# file = 'validation_all_2.pkl'
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
