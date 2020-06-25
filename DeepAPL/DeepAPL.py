@@ -252,6 +252,9 @@ class DeepAPL_SC(base):
                 GO.w = Features
                 GO.w = tf.identity(GO.w,'w')
                 fc =  tf.reduce_max(GO.w, [1, 2])
+                num_fc_layers = 3
+                for _ in range(num_fc_layers):
+                    fc = tf.layers.dense(fc,12,tf.nn.relu)
                 if multisample_dropout_num_masks is not None:
                     GO.logits = MultiSample_Dropout(X=fc,
                                                num_masks=multisample_dropout_num_masks,
@@ -688,6 +691,9 @@ class DeepAPL_WF(base):
                 GO.w = Features
                 GO.w = tf.identity(GO.w,'w')
                 fc =  tf.reduce_max(GO.w, [1, 2])
+                num_fc_layers = 3
+                for _ in range(num_fc_layers):
+                    fc = tf.layers.dense(fc,12,tf.nn.relu)
                 fc = tf.layers.dense(fc,GO.Y.shape[1])
                 GO.cell_pred = tf.nn.softmax(fc,name='cell_pred')
                 sum = tf.sparse.reduce_sum(GO.sp,1)

@@ -10,11 +10,11 @@ import cv2
 from sklearn.metrics import roc_auc_score
 
 data = 'load_data'
-# name = 'discovery_blasts'
-# blasts = True
+name = 'discovery_blasts'
+blasts = True
 
-name = 'discovery_all'
-blasts = False
+# name = 'discovery_all'
+# blasts = False
 
 #open model
 gpu = 1
