@@ -874,11 +874,13 @@ class DeepAPL_WF(base):
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
             cell_pred = graph.get_tensor_by_name('cell_pred:0')
+            features = graph.get_tensor_by_name('dense_2/Relu:0')
 
             out_list = []
             sample_list = np.unique(self.patients)
             cell_pred_list = []
             var_idx_list = []
+            features_list = []
             for vars in get_batches([sample_list], batch_size=batch_size, random=False):
                 var_idx = np.where(np.isin(self.patients, vars[0]))[0]
                 lb = LabelEncoder()
@@ -894,29 +896,40 @@ class DeepAPL_WF(base):
                              sp_i: indices,
                              sp_v: sp.data,
                              sp_s: sp.shape}
-                pred_i,cell_pred_i = sess.run([pred,cell_pred],feed_dict=feed_dict)
+                pred_i,cell_pred_i,features_i = sess.run([pred,cell_pred,features],feed_dict=feed_dict)
                 out_list.append(pred_i)
                 cell_pred_list.append(cell_pred_i)
                 var_idx_list.append(var_idx)
+                features_list.append(features_i)
 
             out_list = np.vstack(out_list)
             cell_pred_out = np.vstack(cell_pred_list)
             var_idx_out = np.hstack(var_idx)
+            features_out = np.vstack(features_list)
+
             cell_pred_temp = np.zeros_like(cell_pred_out)
             cell_pred_temp[var_idx_out] = cell_pred_out
             cell_pred_out = cell_pred_temp
-            return sample_list, out_list, cell_pred_out
 
-    def Ensemble_Inference(self,sample=None):
-        models = os.listdir(os.path.join(self.Name,'models'))
+            features_temp = np.zeros_like(features_out)
+            features_temp[var_idx_out] = features_out
+            features_out = features_temp
+
+            return sample_list, out_list, cell_pred_out, features_out
+
+    def Ensemble_Inference(self,sample=None,models=None):
+        if models is None:
+            models = os.listdir(os.path.join(self.Name,'models'))
         if sample is not None:
             models = np.random.choice(models,sample,replace=False)
         predicted = []
         cell_predicted = []
+        features = []
         for model in models:
-            sample_list,pred,cell_pred = self.Inference(model=model)
+            sample_list,pred,cell_pred,features_i = self.Inference(model=model)
             predicted.append(pred)
             cell_predicted.append(cell_pred)
+            features.append(features_i)
 
         predicted_dist = []
         for p in predicted:
@@ -941,6 +954,7 @@ class DeepAPL_WF(base):
             DFs.append(df_out)
 
         self.DFs_pred = dict(zip(self.lb.classes_,DFs))
+        self.features = np.hstack(features)
 
         return predicted, sample_list
 
@@ -979,6 +993,9 @@ class DeepAPL_WF(base):
         self.grads = grad_out
         self.ig_preds = preds
         return att
+
+    def Get_Features(self):
+        get = 'dense_2/Relu:0'
 
 
 

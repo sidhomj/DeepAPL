@@ -52,8 +52,10 @@ DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
 DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
+models = np.random.choice(range(100), 10, replace=False)
+models = ['model_' + str(x) for x in models]
 #Conduct Inference over ensemble of trained models on discovery cohort
-predicted,sample_list = DAPL_train.Ensemble_Inference()
+predicted,sample_list = DAPL_train.Ensemble_Inference(models=models)
 DAPL_train.Get_Cell_Predicted()
 
 with open(name_out+'.pkl','wb') as f:
