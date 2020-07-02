@@ -36,7 +36,7 @@ for file in files:
 
 
 name = 'validation_all'
-file = 'WF/validation_all_2.pkl'
+file = 'WF/validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
@@ -102,10 +102,10 @@ fpr, tpr, th = roc_curve(y_test, y_pred)
 id = 'Proportion of Promyelocytes'
 plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='blue')
 
-plt.legend(loc="lower right",prop={'size':16},frameon=False)
+plt.legend(loc="lower right",prop={'size':14},frameon=False)
 plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500)
+plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500,zorder=10)
 

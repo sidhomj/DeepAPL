@@ -54,6 +54,7 @@ DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_))
 
 models = np.random.choice(range(100), 10, replace=False)
 models = ['model_' + str(x) for x in models]
+models = None
 #Conduct Inference over ensemble of trained models on discovery cohort
 predicted,sample_list = DAPL_train.Ensemble_Inference(models=models)
 DAPL_train.Get_Cell_Predicted()
@@ -63,6 +64,15 @@ with open(name_out+'.pkl','wb') as f:
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
 
+with open(name_out+'_features.pkl','wb') as f:
+    pickle.dump([DAPL_train.Cell_Pred,DAPL_train.DFs_pred,DAPL_train.imgs,DAPL_train.features,
+                DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
+                DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
+
+import umap
+import matplotlib.pyplot as plt
+X_2 = umap.UMAP().fit_transform(DAPL_train.features)
+plt.scatter(X_2[:,0],X_2[:,1])
 # df_test = pd.DataFrame()
 # df_test['samples'] = DAPL_train.patients
 # df_test['apl'] = DAPL_train.Y[:,1]

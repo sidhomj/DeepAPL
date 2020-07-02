@@ -874,7 +874,10 @@ class DeepAPL_WF(base):
             X = graph.get_tensor_by_name('Input:0')
             pred = graph.get_tensor_by_name('Accuracy_Measurements/predicted:0')
             cell_pred = graph.get_tensor_by_name('cell_pred:0')
-            features = graph.get_tensor_by_name('dense_2/Relu:0')
+            name_ft = ['Max:0', 'dense/Relu:0', 'dense_1/Relu:0', 'dense_2/Relu:0']
+            features = []
+            for n in name_ft:
+                features.append(graph.get_tensor_by_name(n))
 
             out_list = []
             sample_list = np.unique(self.patients)
@@ -896,7 +899,11 @@ class DeepAPL_WF(base):
                              sp_i: indices,
                              sp_v: sp.data,
                              sp_s: sp.shape}
-                pred_i,cell_pred_i,features_i = sess.run([pred,cell_pred,features],feed_dict=feed_dict)
+                gets = [pred,cell_pred]
+                gets.extend(features)
+                pred_i,cell_pred_i,features_i_0,features_i_1,features_i_2,features_i_3\
+                    = sess.run(gets,feed_dict=feed_dict)
+                features_i = np.hstack([features_i_0,features_i_1,features_i_2,features_i_3])
                 out_list.append(pred_i)
                 cell_pred_list.append(cell_pred_i)
                 var_idx_list.append(var_idx)
@@ -993,10 +1000,6 @@ class DeepAPL_WF(base):
         self.grads = grad_out
         self.ig_preds = preds
         return att
-
-    def Get_Features(self):
-        get = 'dense_2/Relu:0'
-
 
 
 
