@@ -1,3 +1,6 @@
+"""
+This script is used to apply integrated gradients method to select cells that carry the most predictive value for APL vs non-APL.
+"""
 from DeepAPL.DeepAPL import DeepAPL_SC
 import os
 import numpy as np

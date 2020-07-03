@@ -1,3 +1,6 @@
+"""
+This script assesses performance metrics for a given model applied to either discovery or validation.
+"""
 from DeepAPL.DeepAPL import DeepAPL_SC
 import os
 import numpy as np

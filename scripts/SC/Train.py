@@ -1,3 +1,7 @@
+"""
+This script trains the cell-level classifier.
+"""
+
 from DeepAPL.DeepAPL import DeepAPL_SC
 import os
 import numpy as np
