@@ -1,3 +1,6 @@
+"""
+This script trains the patient/sample-level classifier.
+"""
 from DeepAPL.DeepAPL import DeepAPL_WF
 import os
 import numpy as np

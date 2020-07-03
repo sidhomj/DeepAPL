@@ -1,3 +1,6 @@
+"""
+This script is used to apply a model trained on the discovery cohort to the validation cohort in ensemble.
+"""
 from DeepAPL.DeepAPL import DeepAPL_SC, DeepAPL_WF
 import os
 import numpy as np

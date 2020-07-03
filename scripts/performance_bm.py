@@ -1,5 +1,5 @@
 """
-This sscript is used to benchmark the clinicians against the performance of the MIL model on all cels trained and tested on the discovery and validation cohort.
+This script is used to benchmark the clinicians against the performance of the MIL model on all cels trained and tested on the discovery and validation cohort.
 """
 
 import pandas as pd
