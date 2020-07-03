@@ -1,3 +1,6 @@
+"""
+This script is used to create the umap representations of the learned feature space for all cells in the validation cohort.
+"""
 import pickle
 import umap
 import matplotlib.pyplot as plt

@@ -1,5 +1,5 @@
 """
-This script is used to load images.
+This script is used to assess the prediction of the train MIL model on the clinical case vignette in the manuscript.
 """
 
 from DeepAPL.DeepAPL import DeepAPL_WF
