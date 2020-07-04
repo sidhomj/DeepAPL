@@ -20,7 +20,7 @@ import copy
 matplotlib.rc('font', family='sans-serif')
 gpu = 1
 
-files = glob.glob('../Data/BM_Results/*')
+files = glob.glob('../Data/Clinical_BM_Responses/*')
 key = pd.read_csv('../Data/key.csv')
 key_dict = dict(zip(key['ID'],key['Diagnosis']))
 tpr_list = []
@@ -42,7 +42,10 @@ for file in files:
 name = 'validation_all'
 file = 'WF/validation_all.pkl'
 
-DAPL = DeepAPL_SC('temp')
+class graph_object(object):
+    def __init__(self):
+        self.init=0
+DAPL = graph_object()
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.DFs_pred,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
