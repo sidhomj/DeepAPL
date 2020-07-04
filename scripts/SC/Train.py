@@ -29,12 +29,10 @@ DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 
 #load metadata & select data in discovery cohort for training
 df_meta = pd.read_csv('../../Data/master.csv')
-df_meta['Date of Diagnosis'] = df_meta['Date of Diagnosis'].astype('datetime64[ns]')
-df_meta.sort_values(by='Date of Diagnosis',inplace=True)
 df_meta = df_meta[df_meta['Cohort']=='Discovery']
 
 #select samples in discovery and cell types for training
-idx_samples_keep = np.isin(DAPL.patients,df_meta['JH Number'])
+idx_samples_keep = np.isin(DAPL.patients,df_meta['Patient_ID'])
 if blasts:
     cell_types = ['Blast, no lineage spec','Myelocyte','Promyelocyte','Metamyelocyte','Promonocyte']
     cell_type_keep = np.isin(DAPL.cell_type,cell_types)
@@ -42,7 +40,7 @@ if blasts:
 else:
     idx_keep = idx_samples_keep
 
-label_dict = dict(zip(df_meta['JH Number'],df_meta['Diagnosis']))
+label_dict = dict(zip(df_meta['Patient_ID'],df_meta['Diagnosis']))
 
 DAPL_train = DeepAPL_SC(name,gpu)
 DAPL_train.imgs = DAPL.imgs[idx_keep]
@@ -100,6 +98,6 @@ with open(name+'.pkl', 'wb') as f:
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
 
-
+check=1
 
 

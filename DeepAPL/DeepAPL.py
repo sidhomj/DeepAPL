@@ -23,11 +23,11 @@ class base(object):
         self.Name = Name
         self.device = '/device:GPU:'+str(device)
 
-        #Create directory for results of analysis
-        directory = self.Name + '_Results'
-        self.directory_results = directory
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        # #Create directory for results of analysis
+        # directory = self.Name + '_Results'
+        # self.directory_results = directory
+        # if not os.path.exists(directory):
+        #     os.makedirs(directory)
 
         #Create directory for any temporary files
         directory = self.Name

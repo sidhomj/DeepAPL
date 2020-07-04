@@ -25,14 +25,17 @@ file = 'discovery_blasts.pkl'
 # name = 'discovery_all'
 # file = 'discovery_all.pkl'
 # # #
-# name = 'validation_all'
-# file = 'validation_all.pkl'
+name = 'validation_all'
+file = 'validation_all.pkl'
 
 DAPL = DeepAPL_SC('temp')
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.DFs_pred,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
+
+with open(file,'rb') as f:
+    out = pickle.load(f)
 
 #remove cells that do not have training data or are in the blurred out group
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
