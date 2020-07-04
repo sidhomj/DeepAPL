@@ -21,7 +21,7 @@ matplotlib.rc('font', family='sans-serif')
 gpu = 1
 
 files = glob.glob('../Data/Clinical_BM_Responses/*')
-key = pd.read_csv('../Data/key.csv')
+key = pd.read_csv('../Data/Clinical_BM/key.csv')
 key_dict = dict(zip(key['ID'],key['Diagnosis']))
 tpr_list = []
 fpr_list = []
@@ -37,7 +37,6 @@ for file in files:
     fpr = fp/(fp+tn)
     tpr_list.append(sens)
     fpr_list.append(fpr)
-
 
 name = 'validation_all'
 file = 'WF/validation_all.pkl'
@@ -70,7 +69,6 @@ df_agg['Label'] = df_agg['Samples'].map(label_dict)
 df_agg.rename(columns={'y_pred':'APL'},inplace=True)
 df_agg.set_index('Samples',inplace=True)
 sample_summary = copy.deepcopy(df_agg)
-
 
 plt.figure()
 plt.xlim([0.0, 1.0])
@@ -114,5 +112,10 @@ plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500,zorder=10)
+plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500,zorder=10,linewidth=5)
+plt.xlim([0,1])
+plt.ylim([0,1])
 
+df_out = pd.DataFrame()
+df_out['tpr'] = tpr_list
+df_out['fpr'] = fpr_list
