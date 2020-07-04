@@ -27,7 +27,10 @@ file = 'discovery_all.pkl'
 name = 'validation_all'
 file = 'validation_all.pkl'
 
-DAPL = DeepAPL_SC('temp')
+class graph_object(object):
+    def __init__(self):
+        self.init=0
+DAPL = graph_object()
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.imgs,\
     DAPL.patients,DAPL.cell_type,DAPL.files,\
