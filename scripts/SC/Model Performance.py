@@ -16,8 +16,8 @@ blasts = True
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 
-# name = 'validation_blasts'
-# file = 'validation_blasts.pkl'
+name = 'validation_blasts'
+file = 'validation_blasts.pkl'
 # # # # #
 # blasts = False
 # name = 'discovery_all'
@@ -136,7 +136,7 @@ fpr, tpr, th = roc_curve(y_test, y_pred)
 id = 'Proportion of Promyelocytes'
 plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='blue')
 
-plt.legend(loc="lower right",prop={'size':16},frameon=False)
+plt.legend(loc="lower right",prop={'size':12},frameon=False)
 plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)

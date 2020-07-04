@@ -15,12 +15,12 @@ name = 'discovery_blasts'
 name_out = 'validation_blasts'
 blasts = True
 
-name = 'discovery_all'
-name_out = 'validation_all'
-blasts = False
+# name = 'discovery_all'
+# name_out = 'validation_all'
+# blasts = False
 
 #Load Trained Model
-gpu = 4
+gpu = 5
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_SC(data,gpu)
