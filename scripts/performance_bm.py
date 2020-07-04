@@ -119,3 +119,4 @@ plt.ylim([0,1])
 df_out = pd.DataFrame()
 df_out['tpr'] = tpr_list
 df_out['fpr'] = fpr_list
+df_out['files'] = files
