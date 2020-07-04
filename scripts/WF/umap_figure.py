@@ -23,13 +23,6 @@ def GKDE(x,y,z=None):
     r = np.argsort(z)
     x ,y, z = x[r], y[r], z[r]
     return x,y,z,kernel,r
-def create_ncolors(N):
-    import colorsys
-    from matplotlib.colors import ListedColormap
-    HSV_tuples = [(x * 1.0 / N, 1.0, 0.5) for x in range(N)]
-    np.random.shuffle(HSV_tuples)
-    RGB_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples)
-    return list(RGB_tuples)
 
 name_out = 'validation_all'
 with open(name_out+'_features.pkl','rb') as f:
@@ -87,7 +80,6 @@ plt.savefig('pred_umap.eps',transparent=True)
 
 #celltype plot
 fig,ax = plt.subplots(figsize=(10,10))
-palette= create_ncolors(len(np.unique(cell_type)))
 cmap = cc.glasbey_bw[0:len(np.unique(cell_type))]
 palette = cmap
 sns.scatterplot(data=data,x=0,y=1,hue='ct',linewidth=0,palette=palette,ax=ax)
@@ -121,7 +113,7 @@ for _ in np.unique(c_idx):
                            path_effects.Normal()])
 
 #myeloid plot
-zoom_idx = np.where(c_idx==0)[0]
+zoom_idx = np.where(c_idx==2)[0]
 X_2_sel = X_2[zoom_idx]
 img_sel = imgs[zoom_idx]
 pred_sel = predicted[zoom_idx,1]

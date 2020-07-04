@@ -48,9 +48,6 @@ with open(file,'rb') as f:
     DAPL.patients,DAPL.cell_type,DAPL.files,\
     DAPL.smears,DAPL.labels,DAPL.Y,DAPL.predicted,DAPL.lb = pickle.load(f)
 
-with open(file,'rb') as f:
-    out = pickle.load(f)
-
 #remove cells that do not have training data or are in the blurred out group
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Counts']>=1]
 DAPL.Cell_Pred = DAPL.Cell_Pred[DAPL.Cell_Pred['Label']!='out']
