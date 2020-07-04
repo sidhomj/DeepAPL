@@ -10,7 +10,6 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 warnings.filterwarnings('ignore')
 import cv2
-from sklearn.metrics import roc_auc_score
 
 data = 'load_data'
 name = 'discovery_blasts'

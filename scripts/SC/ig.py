@@ -10,7 +10,7 @@ warnings.filterwarnings('ignore')
 import matplotlib.pyplot as plt
 import copy
 import matplotlib
-matplotlib.rc('font', family='Times New Roman')
+matplotlib.rc('font', family='sans-serif')
 from matplotlib.colors import ListedColormap
 
 

@@ -14,6 +14,8 @@ from sklearn.cluster import DBSCAN, AgglomerativeClustering,KMeans
 import matplotlib.patheffects as path_effects
 import colorcet as cc
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+import matplotlib
+matplotlib.rc('font', family='sans-serif')
 def GKDE(x,y,z=None):
     xy = np.vstack([x, y])
     kernel = gaussian_kde(xy,weights=z)

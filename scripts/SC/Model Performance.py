@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve,roc_auc_score
 import seaborn as sns
 import matplotlib
 import pandas as pd
-matplotlib.rc('font', family='Times New Roman')
+matplotlib.rc('font', family='sans-serif')
 gpu = 1
 
 blasts = True

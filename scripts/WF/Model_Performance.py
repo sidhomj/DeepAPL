@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib
 import pandas as pd
 import copy
-matplotlib.rc('font', family='Times New Roman')
+matplotlib.rc('font', family='sans-serif')
 gpu = 1
 
 blasts = True
