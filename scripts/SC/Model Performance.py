@@ -11,25 +11,35 @@ import seaborn as sns
 import matplotlib
 import pandas as pd
 matplotlib.rc('font', family='sans-serif')
-gpu = 1
 
 blasts = True
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
 
-name = 'validation_blasts'
-file = 'validation_blasts.pkl'
-# # # #
-blasts = False
-name = 'discovery_all'
-file = 'discovery_all.pkl'
+# name = 'validation_blasts'
+# file = 'validation_blasts.pkl'
 # # # # #
-name = 'validation_all'
-file = 'validation_all.pkl'
+# blasts = False
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
+# # # # # #
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 class graph_object(object):
     def __init__(self):
         self.init=0
+    def Sample_Summary(self):
+        if hasattr(self,'predicted_dist'):
+            group_dict = {'Label':'first'}
+            for ii in self.lb.classes_:
+                group_dict[ii] = 'mean'
+                group_dict[ii+'_ci'] = 'mean'
+        else:
+            group_dict = {'Label':'first'}
+            for ii in self.lb.classes_:
+                group_dict[ii] = 'mean'
+        self.sample_summary = self.Cell_Pred.groupby(['Patient']).agg(group_dict)
 DAPL = graph_object()
 with open(file,'rb') as f:
     DAPL.Cell_Pred,DAPL.imgs,\
@@ -132,50 +142,4 @@ ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 plt.savefig(name+'_sample_auc.eps',transparent=True)
-
-#Assess performance over min number of cells per sample
-
-# #Sample Level Performance with samples >= 10 cells
-DAPL.Cell_Pred['n'] = 1
-agg = DAPL.Cell_Pred.groupby(['Patient']).agg({'Label':'first','n':'sum'})
-#
-DAPL.Sample_Summary()
-n_list = []
-auc_list = []
-auc_pro = []
-number_pos = []
-number_neg = []
-for n in range(0,np.max(agg['n'])):
-    try:
-        keep = np.array(list(agg[agg['n']>=n].index))
-        sample_summary_temp = DAPL.sample_summary[DAPL.sample_summary.index.isin(keep)]
-        sample_summary_temp['pro'] = sample_summary_temp.index.map(pro_dict)
-        y_test = np.asarray(sample_summary_temp['Label']) == 'APL'
-        y_pred = np.asarray(sample_summary_temp['APL'])
-        roc_score = roc_auc_score(y_test,y_pred)
-        auc_list.append(roc_score)
-        n_list.append(n)
-        auc_pro.append(roc_auc_score(y_test,sample_summary_temp['pro']))
-        number_pos.append(np.sum(y_test))
-        number_neg.append(np.sum(y_test!=True))
-    except:
-        continue
-
-df_auc = pd.DataFrame()
-df_auc['num_cells_per_sample'] = n_list
-df_auc['auc'] = auc_list
-df_auc['auc_pro'] = auc_pro
-df_auc['number_pos'] = number_pos
-df_auc['number_neg'] = number_neg
-plt.figure()
-sns.lineplot(data=df_auc,x='num_cells_per_sample',y='auc',label='CNN')
-sns.lineplot(data=df_auc,x='num_cells_per_sample',y='auc_pro',label='Proportion of Promyelocytes')
-plt.ylim([0,1.1])
-plt.xlabel('Num Cells Per Sample',fontsize=24)
-plt.ylabel('AUC',fontsize=24)
-plt.xticks(fontsize=16)
-plt.yticks(fontsize=16)
-plt.legend(loc="lower right",prop={'size':16},frameon=False)
-plt.tight_layout()
-plt.savefig(name+'_auc_v_numcells.eps')
 
