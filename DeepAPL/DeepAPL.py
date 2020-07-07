@@ -556,28 +556,26 @@ class DeepAPL_SC(base):
 
 
             predicted = []
-            w = []
-            l1_list = []
-            l2_list = []
-            l3_list = []
-            l4_list = []
+            # l1_list = []
+            # l2_list = []
+            # l3_list = []
+            # l4_list = []
             for x in get_batches([self.imgs], batch_size=batch_size, random=False):
                 feed_dict = {X: x[0]}
                 predicted_i,w_temp = sess.run([pred,w_var],feed_dict=feed_dict)
                 predicted.append(predicted_i)
-                w.append(w_temp)
-                l1_i, l2_i, l3_i,l4_i = sess.run([l1,l2,l3,l4],feed_dict=feed_dict)
-                l1_list.append(l1_i)
-                l2_list.append(l2_i)
-                l3_list.append(l3_i)
-                l4_list.append(l4_i)
+                # l1_i, l2_i, l3_i,l4_i = sess.run([l1,l2,l3,l4],feed_dict=feed_dict)
+                # l1_list.append(l1_i)
+                # l2_list.append(l2_i)
+                # l3_list.append(l3_i)
+                # l4_list.append(l4_i)
 
             self.predicted = np.vstack(predicted)
-            self.w = np.vstack(w)
-            self.l1 = np.vstack(l1_list)
-            self.l2 = np.vstack(l2_list)
-            self.l3 = np.vstack(l3_list)
-            self.l4 = np.vstack(l4_list)
+            # self.w = np.vstack(w)
+            # self.l1 = np.vstack(l1_list)
+            # self.l2 = np.vstack(l2_list)
+            # self.l3 = np.vstack(l3_list)
+            # self.l4 = np.vstack(l4_list)
 
             self.y_pred = self.predicted
             self.y_test = self.Y
@@ -586,24 +584,25 @@ class DeepAPL_SC(base):
         models = os.listdir(os.path.join(self.Name,'models'))
         predicted = []
         w = []
-        for model in models:
+        for ii,model in enumerate(models,0):
+            print(ii)
             self.Inference(model=model)
             predicted.append(self.predicted)
-            w.append(self.w)
+            # w.append(self.w)
 
         predicted_dist = []
         for p in predicted:
             predicted_dist.append(np.expand_dims(p,0))
         predicted_dist = np.vstack(predicted_dist)
 
-        w_dist = []
-        for w_temp in w:
-            w_dist.append(np.expand_dims(w_temp,0))
-        w_dist = np.vstack(w_dist)
+        # w_dist = []
+        # for w_temp in w:
+        #     w_dist.append(np.expand_dims(w_temp,0))
+        # w_dist = np.vstack(w_dist)
 
         self.predicted = np.mean(predicted_dist,0)
         self.predicted_dist = predicted_dist
-        self.w = np.mean(w_dist,0)
+        # self.w = np.mean(w_dist,0)
 
         self.y_pred = self.predicted
         self.y_test = self.Y
@@ -620,7 +619,7 @@ class DeepAPL_SC(base):
             inc = (img - baseline) / steps
             img_s = [baseline + inc * i for i in range(1, steps + 1)]
             img_s = np.stack(img_s)
-            for model in models:
+            for ii,model in enumerate(models,0):
                 for _ in range(1):
                     saver = tf.train.import_meta_graph(os.path.join(self.Name, 'models',model, 'model.ckpt.meta'))
                     saver.restore(sess, tf.train.latest_checkpoint(os.path.join(self.Name,'models', model)))
@@ -754,20 +753,20 @@ class DeepAPL_WF(base):
 
                 train_loss_total.append(train_loss)
 
-                # valid_loss,valid_accuracy,valid_predicted,valid_auc = Run_Graph_WF(self.valid,sess,self,GO,batch_size,random=False,
-                #              train=False,class_weights=class_weights)
-                #
-                # val_loss_total.append(valid_loss)
-                #
-                # test_loss,test_accuracy,test_predicted,test_auc = Run_Graph_WF(self.test,sess,self,GO,batch_size,random=False,
-                #              train=False,class_weights=class_weights)
-                #
-                # self.y_pred = test_predicted
-                # self.y_test = self.test[-1]
+                valid_loss,valid_accuracy,valid_predicted,valid_auc = Run_Graph_WF(self.valid,sess,self,GO,batch_size,random=False,
+                             train=False,class_weights=class_weights)
 
-                valid_loss = 1.0
-                test_loss = 1.0
-                test_auc = 1.0
+                val_loss_total.append(valid_loss)
+
+                test_loss,test_accuracy,test_predicted,test_auc = Run_Graph_WF(self.test,sess,self,GO,batch_size,random=False,
+                             train=False,class_weights=class_weights)
+
+                self.y_pred = test_predicted
+                self.y_test = self.test[-1]
+
+                # valid_loss = 1.0
+                # test_loss = 1.0
+                # test_auc = 1.0
 
                 print("Training_Statistics: \n",
                       "Epoch: {}".format(e),

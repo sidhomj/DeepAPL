@@ -113,10 +113,3 @@ ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500,zorder=10,linewidth=5)
-plt.xlim([0,1])
-plt.ylim([0,1])
-
-df_out = pd.DataFrame()
-df_out['tpr'] = tpr_list
-df_out['fpr'] = fpr_list
-df_out['files'] = files

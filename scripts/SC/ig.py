@@ -28,7 +28,7 @@ write = 'validation_blasts'
 # file = 'validation_all.pkl'
 # write = 'validation_all'
 
-gpu = 0
+gpu = 2
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 
@@ -78,7 +78,9 @@ my_cmap = ListedColormap(my_cmap)
 #Plot IG maps
 fig,ax = plt.subplots(3,3,figsize=(7,7))
 ax = np.ndarray.flatten(ax)
+n = 1
 for ii,ax_ in zip(img_idx,ax):
+    print(n)
     img = DAPL.imgs[ii]
     att = DAPL.IG(img=img,a=a,b=b,models=models)
     vmax,vmin = np.percentile(att,99), np.percentile(att,0)
@@ -87,6 +89,7 @@ for ii,ax_ in zip(img_idx,ax):
     ax_.set_xticks([])
     ax_.set_yticks([])
     ax_.set_axis_off()
+    n+=1
 plt.tight_layout()
 plt.savefig(write+'_'+sel+'_att.tif',dpi=1200,transparent=True)
 

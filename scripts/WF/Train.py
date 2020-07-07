@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 import cv2
 
 data = 'load_data'
-name = 'discovery_blasts'
+name = 'discovery_blasts_2'
 blasts = True
 
 # name = 'discovery_all'
@@ -90,7 +90,7 @@ subsample = 25
 DAPL_train.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,epochs_min=epochs_min,
                           stop_criterion=0.25,test_size=0.25,graph_seed=graph_seed,
                           weight_by_class=True,subsample=subsample,combine_train_valid=True,
-                                train_loss_min=0.25,learning_rate=0.001)
+                                train_loss_min=1.0,learning_rate=0.001)
 
 DAPL_train.Get_Cell_Predicted()
 with open(name+'.pkl', 'wb') as f:

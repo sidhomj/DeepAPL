@@ -20,7 +20,7 @@ name_out = 'validation_all'
 blasts = False
 
 #Load Trained Model
-gpu = 5
+gpu = 6
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_WF(data,gpu)

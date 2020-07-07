@@ -18,13 +18,13 @@ file = 'discovery_blasts.pkl'
 
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
-# # # # #
-# blasts = False
-# name = 'discovery_all'
-# file = 'discovery_all.pkl'
+
+blasts = False
+name = 'discovery_all'
+file = 'discovery_all.pkl'
 # # # # # #
-# name = 'validation_all'
-# file = 'validation_all.pkl'
+name = 'validation_all'
+file = 'validation_all.pkl'
 
 class graph_object(object):
     def __init__(self):
@@ -142,4 +142,5 @@ ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 plt.savefig(name+'_sample_auc.eps',transparent=True)
+check=1
 

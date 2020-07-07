@@ -90,7 +90,7 @@ ax.set_yticks([])
 ax.set_xlabel('')
 ax.set_ylabel('')
 handles, labels = ax.get_legend_handles_labels()
-ax.legend(handles=handles[1:], labels=labels[1:],frameon=False,prop={'size': 12})
+ax.legend(handles=handles[1:], labels=labels[1:],frameon=False,prop={'size': 11})
 plt.savefig('ct_umap.eps',transparent=True)
 
 
@@ -113,7 +113,7 @@ for _ in np.unique(c_idx):
                            path_effects.Normal()])
 
 #myeloid plot
-zoom_idx = np.where(c_idx==2)[0]
+zoom_idx = np.where(c_idx==0)[0]
 X_2_sel = X_2[zoom_idx]
 img_sel = imgs[zoom_idx]
 pred_sel = predicted[zoom_idx,1]
