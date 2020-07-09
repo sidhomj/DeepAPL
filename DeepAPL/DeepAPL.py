@@ -284,7 +284,7 @@ class DeepAPL_SC(base):
 
     def _train(self,batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
                dropout_rate=0.0,multisample_dropout_rate=0.0,iteration=0,
-               train_loss_min=None,convergence='validation'):
+               train_loss_min=None,convergence='validation',class_weights=None):
         GO = self.GO
         tf.reset_default_graph()
         config = tf.ConfigProto()
@@ -294,7 +294,8 @@ class DeepAPL_SC(base):
         stop_check_list = []
         val_loss_total = []
         train_loss_total = []
-        class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+        if class_weights is None:
+            class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
 
         with tf.Session(graph=GO.graph_model, config=config) as sess:
             sess.run(tf.global_variables_initializer())
@@ -373,20 +374,21 @@ class DeepAPL_SC(base):
               l1_units=12, l2_units=24, l3_units=32,
               batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
               dropout_rate=0.0,multisample_dropout_rate=0.0,
-              train_loss_min=None,convergence='validation'):
+              train_loss_min=None,convergence='validation',class_weights=None):
         self._reset_models()
         self._build(weight_by_class,multisample_dropout_num_masks,graph_seed,
                     l1_units,l2_units,l3_units)
+        iteration = 0
         self._train(batch_size, epochs_min,stop_criterion,stop_criterion_window,
-                    dropout_rate,multisample_dropout_rate,
-                    train_loss_min,convergence)
+                    dropout_rate,multisample_dropout_rate,iteration,
+                    train_loss_min,convergence,class_weights)
 
     def Monte_Carlo_CrossVal(self,folds=5,seeds=None,test_size=0.25,combine_train_valid=False,train_all=False,
                              weight_by_class=False, multisample_dropout_num_masks=None,graph_seed=None,
                              l1_units=12, l2_units=24, l3_units=32,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                             dropout_rate = 0.0, multisample_dropout_rate = 0.0,
-                             train_loss_min=None,convergence='validation'):
+                             train_loss_min=None,convergence='validation',class_weights=None):
 
         y_pred = []
         y_test = []
@@ -403,7 +405,7 @@ class DeepAPL_SC(base):
             self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
             self._train(batch_size, epochs_min, stop_criterion, stop_criterion_window,
                         dropout_rate, multisample_dropout_rate,iteration=i,
-                        train_loss_min=train_loss_min,convergence=convergence)
+                        train_loss_min=train_loss_min,convergence=convergence,class_weights=class_weights)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
@@ -692,6 +694,7 @@ class DeepAPL_WF(base):
                 fc =  tf.reduce_max(GO.w, [1, 2])
                 num_fc_layers = 3
                 for _ in range(num_fc_layers):
+                    fc = tf.layers.dropout(fc,0.4)
                     fc = tf.layers.dense(fc,12,tf.nn.relu)
                 fc = tf.layers.dense(fc,GO.Y.shape[1])
                 GO.cell_pred = tf.nn.softmax(fc,name='cell_pred')
@@ -729,7 +732,7 @@ class DeepAPL_WF(base):
 
     def _train(self,batch_size = 10, epochs_min = 10,stop_criterion=0.001,stop_criterion_window=10,
                dropout_rate=0.0,multisample_dropout_rate=0.0,iteration=0,
-               train_loss_min=None,convergence='validation',subsample=None):
+               train_loss_min=None,convergence='validation',subsample=None,class_weights=None):
         GO = self.GO
         tf.reset_default_graph()
         config = tf.ConfigProto()
@@ -738,7 +741,8 @@ class DeepAPL_WF(base):
         stop_check_list = []
         val_loss_total = []
         train_loss_total = []
-        class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
+        if class_weights is None:
+            class_weights = np.array([(1 / (np.sum(self.train[-1], 0) / np.sum(self.train[-1]))).tolist()])
 
         with tf.Session(graph=GO.graph_model, config=config) as sess:
             sess.run(tf.global_variables_initializer())
@@ -753,20 +757,20 @@ class DeepAPL_WF(base):
 
                 train_loss_total.append(train_loss)
 
-                valid_loss,valid_accuracy,valid_predicted,valid_auc = Run_Graph_WF(self.valid,sess,self,GO,batch_size,random=False,
-                             train=False,class_weights=class_weights)
+                # valid_loss,valid_accuracy,valid_predicted,valid_auc = Run_Graph_WF(self.valid,sess,self,GO,batch_size,random=False,
+                #              train=False,class_weights=class_weights)
+                #
+                # val_loss_total.append(valid_loss)
 
-                val_loss_total.append(valid_loss)
+                # test_loss,test_accuracy,test_predicted,test_auc = Run_Graph_WF(self.test,sess,self,GO,batch_size,random=False,
+                #              train=False,class_weights=class_weights)
+                #
+                # self.y_pred = test_predicted
+                # self.y_test = self.test[-1]
 
-                test_loss,test_accuracy,test_predicted,test_auc = Run_Graph_WF(self.test,sess,self,GO,batch_size,random=False,
-                             train=False,class_weights=class_weights)
-
-                self.y_pred = test_predicted
-                self.y_test = self.test[-1]
-
-                # valid_loss = 1.0
-                # test_loss = 1.0
-                # test_auc = 1.0
+                valid_loss = 1.0
+                test_loss = 1.0
+                test_auc = 1.0
 
                 print("Training_Statistics: \n",
                       "Epoch: {}".format(e),
@@ -796,6 +800,7 @@ class DeepAPL_WF(base):
                          train=False,class_weights=class_weights)
             self.y_pred = test_predicted
             self.y_test = self.test[-1]
+            self.test_loss = test_loss
 
             pred, idx = Get_Cell_Pred(self,batch_size,GO,sess)
             self.predicted[idx] += pred
@@ -807,11 +812,12 @@ class DeepAPL_WF(base):
                              l1_units=12, l2_units=24, l3_units=32,learning_rate=0.001,
                              batch_size=10, epochs_min=10, stop_criterion=0.001, stop_criterion_window=10,
                             dropout_rate = 0.0, multisample_dropout_rate = 0.0,
-                             train_loss_min=None,convergence='validation',subsample=None):
+                             train_loss_min=None,convergence='validation',subsample=None,class_weights=None):
 
         y_pred = []
         y_test = []
         files = []
+        test_losses = []
         self.predicted = np.zeros((len(self.Y),len(self.lb.classes_)))
         counts = np.zeros_like(self.predicted)
         self._reset_models()
@@ -825,11 +831,12 @@ class DeepAPL_WF(base):
             self.Get_Train_Valid_Test(test_size=test_size,combine_train_valid=combine_train_valid,train_all=train_all)
             self._train(batch_size, epochs_min, stop_criterion, stop_criterion_window,
                         dropout_rate, multisample_dropout_rate,iteration=i,
-                        train_loss_min=train_loss_min,convergence=convergence,subsample=subsample)
+                        train_loss_min=train_loss_min,convergence=convergence,subsample=subsample,class_weights=class_weights)
 
             y_test.append(self.y_test)
             y_pred.append(self.y_pred)
             files.append(self.test[0])
+            test_losses.append(self.test_loss)
             counts[self.seq_idx] += 1
 
             y_test2 = np.vstack(y_test)
@@ -857,6 +864,7 @@ class DeepAPL_WF(base):
         self.DFs_pred = dict(zip(self.lb.classes_,DFs))
         self.predicted = np.divide(self.predicted,counts, out = np.zeros_like(self.predicted), where = counts != 0)
         self.counts = counts
+        self.test_losses = np.array(test_losses)
         print('Monte Carlo Simulation Completed')
 
     def Inference(self,model='model_0',batch_size=100):
@@ -961,6 +969,7 @@ class DeepAPL_WF(base):
 
         self.DFs_pred = dict(zip(self.lb.classes_,DFs))
         self.features = np.hstack(features)
+        self.predicted_dist = predicted_dist
 
         return predicted, sample_list
 

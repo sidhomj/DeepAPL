@@ -11,8 +11,8 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 warnings.filterwarnings('ignore')
 
 data = 'load_data'
-name = 'discovery_blasts'
-name_out = 'validation_blasts'
+name = 'discovery_blasts_2'
+name_out = 'validation_blasts_2'
 blasts = True
 
 name = 'discovery_all'
@@ -52,9 +52,14 @@ DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
 DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
-models = np.random.choice(range(100), 10, replace=False)
-models = ['model_' + str(x) for x in models]
+# with open(name+'_test_losses.pkl','rb') as f:
+#     test_losses = pickle.load(f)
+# models = np.where(test_losses>1.0)[0]
+
+# models = np.random.choice(range(100), 25, replace=False)
+# models = ['model_' + str(x) for x in models]
 models = None
+
 #Conduct Inference over ensemble of trained models on discovery cohort
 predicted,sample_list = DAPL_train.Ensemble_Inference(models=models)
 DAPL_train.Get_Cell_Predicted()
@@ -68,3 +73,31 @@ with open(name_out+'_features.pkl','wb') as f:
     pickle.dump([DAPL_train.Cell_Pred,DAPL_train.DFs_pred,DAPL_train.imgs,DAPL_train.features,
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
+
+from sklearn.metrics import roc_auc_score
+from copy import deepcopy
+import matplotlib.pyplot as plt
+lab = np.array([label_dict[x] for x in sample_list])
+y = DAPL_train.lb.transform(lab)
+predicted_dist = deepcopy(DAPL_train.predicted_dist)
+np.random.shuffle(predicted_dist)
+auc_list = []
+for ii in range(1,100):
+    auc_list.append(roc_auc_score(y,np.mean(predicted_dist[:ii,:,1],0)))
+plt.plot(auc_list)
+
+auc_means = []
+auc_range = []
+for jj in np.arange(10, 90, 10):
+    auc_list = []
+    for ii in range(1000):
+        np.random.shuffle(predicted_dist)
+        auc_list.append(roc_auc_score(y, np.mean(predicted_dist[:jj, :, 1],0)))
+    auc_means.append(np.mean(auc_list))
+    auc_range.append(np.ptp(auc_list))
+
+plt.figure()
+plt.scatter(np.arange(10,90,10),auc_means)
+plt.figure()
+plt.scatter(np.arange(10,90,10),auc_range)
+plt.hist(auc_list,100)

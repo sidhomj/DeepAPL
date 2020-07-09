@@ -15,11 +15,11 @@ data = 'load_data'
 name = 'discovery_blasts_2'
 blasts = True
 
-# name = 'discovery_all'
-# blasts = False
+name = 'discovery_all_2'
+blasts = False
 
 #open model
-gpu = 3
+gpu = 2
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 DAPL = DeepAPL_WF(data,gpu)
@@ -82,7 +82,7 @@ DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
 #Set training parameters and train in MC fashion
-folds = 100
+folds = 25
 seeds = np.array(range(folds))
 epochs_min = 10
 graph_seed = 0
@@ -90,7 +90,7 @@ subsample = 25
 DAPL_train.Monte_Carlo_CrossVal(folds=folds,seeds=seeds,epochs_min=epochs_min,
                           stop_criterion=0.25,test_size=0.25,graph_seed=graph_seed,
                           weight_by_class=True,subsample=subsample,combine_train_valid=True,
-                                train_loss_min=1.0,learning_rate=0.001)
+                                train_loss_min=0.25,learning_rate=0.001)
 
 DAPL_train.Get_Cell_Predicted()
 with open(name+'.pkl', 'wb') as f:
@@ -99,4 +99,5 @@ with open(name+'.pkl', 'wb') as f:
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
 
-check=1
+with open(name+'_test_losses.pkl','wb') as f:
+    pickle.dump(DAPL_train.test_losses,f,protocol=4)
