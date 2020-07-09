@@ -28,7 +28,7 @@ write = 'validation_blasts'
 # file = 'validation_all.pkl'
 # write = 'validation_all'
 
-gpu = 2
+gpu = 1
 os.environ["CUDA DEVICE ORDER"] = 'PCI_BUS_ID'
 os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
 

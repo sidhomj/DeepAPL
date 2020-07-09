@@ -15,16 +15,16 @@ matplotlib.rc('font', family='sans-serif')
 blasts = True
 name = 'discovery_blasts'
 file = 'discovery_blasts.pkl'
-
+#
 name = 'validation_blasts'
 file = 'validation_blasts.pkl'
 
-blasts = False
-name = 'discovery_all'
-file = 'discovery_all.pkl'
-# # # # # #
-name = 'validation_all'
-file = 'validation_all.pkl'
+# blasts = False
+# name = 'discovery_all'
+# file = 'discovery_all.pkl'
+# # # # # # #
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 class graph_object(object):
     def __init__(self):
