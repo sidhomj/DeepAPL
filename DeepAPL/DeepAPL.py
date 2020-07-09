@@ -968,7 +968,6 @@ class DeepAPL_WF(base):
 
         self.DFs_pred = dict(zip(self.lb.classes_,DFs))
         self.features = np.hstack(features)
-        self.predicted_dist = predicted_dist
 
         return predicted, sample_list
 
