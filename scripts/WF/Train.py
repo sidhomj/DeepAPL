@@ -12,10 +12,10 @@ warnings.filterwarnings('ignore')
 import cv2
 
 data = 'load_data'
-name = 'discovery_blasts_2'
+name = 'discovery_blasts'
 blasts = True
 
-name = 'discovery_all_2'
+name = 'discovery_all'
 blasts = False
 
 #open model
@@ -82,7 +82,7 @@ DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
 #Set training parameters and train in MC fashion
-folds = 25
+folds = 100
 seeds = np.array(range(folds))
 epochs_min = 10
 graph_seed = 0

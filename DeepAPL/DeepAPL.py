@@ -694,7 +694,6 @@ class DeepAPL_WF(base):
                 fc =  tf.reduce_max(GO.w, [1, 2])
                 num_fc_layers = 3
                 for _ in range(num_fc_layers):
-                    # fc = tf.layers.dropout(fc,0.4)
                     fc = tf.layers.dense(fc,12,tf.nn.relu)
                 fc = tf.layers.dense(fc,GO.Y.shape[1])
                 GO.cell_pred = tf.nn.softmax(fc,name='cell_pred')

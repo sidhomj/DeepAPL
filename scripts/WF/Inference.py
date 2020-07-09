@@ -11,8 +11,8 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 warnings.filterwarnings('ignore')
 
 data = 'load_data'
-name = 'discovery_blasts_2'
-name_out = 'validation_blasts_2'
+name = 'discovery_blasts'
+name_out = 'validation_blasts'
 blasts = True
 
 name = 'discovery_all'
@@ -29,7 +29,6 @@ DAPL.Import_Data(directory=None, Load_Prev_Data=True)
 #Get data from Validation Cohort
 df_meta = pd.read_csv('../../Data/master.csv')
 df_meta = df_meta[df_meta['Cohort']=='Validation']
-
 
 idx_samples_keep = np.isin(DAPL.patients,df_meta['Patient_ID'])
 if blasts:
@@ -52,12 +51,8 @@ DAPL_train.Y = DAPL_train.lb.transform(DAPL_train.labels)
 DAPL_train.Y = OneHotEncoder(sparse=False).fit_transform(DAPL_train.Y.reshape(-1,1))
 DAPL_train.predicted = np.zeros((len(DAPL_train.Y), len(DAPL_train.lb.classes_)))
 
-# with open(name+'_test_losses.pkl','rb') as f:
-#     test_losses = pickle.load(f)
-# models = np.where(test_losses>1.0)[0]
-
-# models = np.random.choice(range(100), 25, replace=False)
-# models = ['model_' + str(x) for x in models]
+models = np.random.choice(range(100), 25, replace=False)
+models = ['model_' + str(x) for x in models]
 models = None
 
 #Conduct Inference over ensemble of trained models on discovery cohort
