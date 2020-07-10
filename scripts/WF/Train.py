@@ -98,6 +98,3 @@ with open(name+'.pkl', 'wb') as f:
                  DAPL_train.imgs,
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
-
-with open(name+'_test_losses.pkl','wb') as f:
-    pickle.dump(DAPL_train.test_losses,f,protocol=4)
