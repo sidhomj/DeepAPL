@@ -113,7 +113,7 @@ for _ in np.unique(c_idx):
                            path_effects.Normal()])
 
 #myeloid plot
-zoom_idx = np.where(c_idx==0)[0]
+zoom_idx = np.where(c_idx==1)[0]
 X_2_sel = X_2[zoom_idx]
 img_sel = imgs[zoom_idx]
 pred_sel = predicted[zoom_idx,1]

@@ -107,12 +107,14 @@ fpr, tpr, th = roc_curve(y_test, y_pred)
 id = 'Proportion of Promyelocytes'
 plt.plot(fpr, tpr, lw=2, label='%s (%0.3f)' % (id, roc_score),c='blue')
 
-plt.legend(loc="lower right",prop={'size':14},frameon=False)
+plt.legend(loc="lower right",prop={'size':12},frameon=False)
 plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
 plt.scatter(fpr_list,tpr_list,c='r',marker='+',s=500,zorder=10,linewidth=5)
-plt.scatter(np.mean(fpr_list),np.mean(tpr_list),c='g',marker='+',s=1000,zorder=10,linewidth=5)
-plt.xlim([0,1])
-plt.ylim([0,1])
+plt.savefig('bm.eps',transparent=True)
+
+# plt.scatter(np.mean(fpr_list),np.mean(tpr_list),c='g',marker='+',s=1000,zorder=10,linewidth=5)
+# plt.xlim([0,1])
+# plt.ylim([0,1])

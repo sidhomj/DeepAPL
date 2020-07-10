@@ -69,30 +69,3 @@ with open(name_out+'_features.pkl','wb') as f:
                 DAPL_train.patients,DAPL_train.cell_type,DAPL_train.files,DAPL_train.smears,
                 DAPL_train.labels,DAPL_train.Y,DAPL_train.predicted,DAPL_train.lb],f,protocol=4)
 
-from sklearn.metrics import roc_auc_score
-from copy import deepcopy
-import matplotlib.pyplot as plt
-lab = np.array([label_dict[x] for x in sample_list])
-y = DAPL_train.lb.transform(lab)
-predicted_dist = deepcopy(DAPL_train.predicted_dist)
-np.random.shuffle(predicted_dist)
-auc_list = []
-for ii in range(1,100):
-    auc_list.append(roc_auc_score(y,np.mean(predicted_dist[:ii,:,1],0)))
-plt.plot(auc_list)
-
-auc_means = []
-auc_range = []
-for jj in np.arange(10, 90, 10):
-    auc_list = []
-    for ii in range(1000):
-        np.random.shuffle(predicted_dist)
-        auc_list.append(roc_auc_score(y, np.mean(predicted_dist[:jj, :, 1],0)))
-    auc_means.append(np.mean(auc_list))
-    auc_range.append(np.ptp(auc_list))
-
-plt.figure()
-plt.scatter(np.arange(10,90,10),auc_means)
-plt.figure()
-plt.scatter(np.arange(10,90,10),auc_range)
-plt.hist(auc_list,100)
