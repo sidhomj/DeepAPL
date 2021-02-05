@@ -25,8 +25,8 @@ blasts = False
 name = 'discovery_all'
 file = 'discovery_all.pkl'
 # # # #
-# name = 'validation_all'
-# file = 'validation_all.pkl'
+name = 'validation_all'
+file = 'validation_all.pkl'
 
 class graph_object(object):
     def __init__(self):
