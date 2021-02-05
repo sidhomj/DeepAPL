@@ -25,8 +25,8 @@ blasts = False
 name = 'discovery_all'
 file = 'discovery_all.pkl'
 # # # #
-name = 'validation_all'
-file = 'validation_all.pkl'
+# name = 'validation_all'
+# file = 'validation_all.pkl'
 
 class graph_object(object):
     def __init__(self):
@@ -84,14 +84,16 @@ plt.savefig(name+'_sc_auc.eps',transparent=True)
 if blasts:
     fig, ax = plt.subplots(figsize=(5, 5))
     order = ['Blast, no lineage spec', 'Promonocyte', 'Promyelocyte', 'Myelocyte', 'Metamyelocyte']
+    rotation = 45
 else:
     fig, ax = plt.subplots(figsize=(15, 8))
     order = DAPL.Cell_Pred.groupby(['Cell_Type']).agg({'APL':'mean'}).sort_values(by='APL').index
+    rotation=90
 sns.violinplot(data=DAPL.Cell_Pred,x='Cell_Type',y='APL',cut=0,ax=ax,order=order)
 plt.xlabel('Cellavision Cell Type',fontsize=24)
 plt.ylabel('P(APL)',fontsize=24)
 ax.xaxis.set_ticks_position('top')
-plt.xticks(rotation=-45,fontsize=16)
+plt.xticks(rotation=-rotation,fontsize=16)
 plt.yticks(fontsize=16)
 plt.ylim([0,1])
 ax.spines['right'].set_visible(False)
