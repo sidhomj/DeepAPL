@@ -150,36 +150,33 @@ plt.tight_layout()
 ax = plt.gca()
 ax.tick_params(axis="x", labelsize=16)
 ax.tick_params(axis='y', labelsize=16)
-
-
-#bootstrap
-n_boots = 5000
-auc_list = []
-method_list = []
-for _ in range(n_boots):
-    sel_idx = np.random.choice(len(df_agg),len(df_agg),replace=True)
-    y_test = np.asarray(df_agg['Label'].iloc[sel_idx]) == 'APL'
-    y_pred = np.asarray(df_agg['APL'].iloc[sel_idx])
-    roc_score = roc_auc_score(y_test, y_pred)
-    auc_list.append(roc_score)
-    method_list.append('CNN')
-
-    y_test = np.array(df_pro['Label_Bin'].iloc[sel_idx])
-    y_pred = np.array(df_pro['Pro_Prop'].iloc[sel_idx])
-    roc_score = roc_auc_score(y_test, y_pred)
-    auc_list.append(roc_score)
-    method_list.append('Promyelocyte')
-
-df_comp = pd.DataFrame()
-df_comp['method'] = method_list
-df_comp['auc'] = auc_list
-my_pal = {"CNN": "grey", "Promyelocyte": "blue"}
-sns.violinplot(data=df_comp,x='method',y='auc',cut=0,palette=my_pal)
-lower_bound = np.percentile(df_comp['auc'][df_comp['method']=='CNN'],5)
-upper_bound = np.percentile(df_comp['auc'][df_comp['method']=='Promyelocyte'],95)
-
 plt.savefig(name+'_sample_auc.eps',transparent=True)
 
 
-check=1
+# bootstrap
+# n_boots = 5000
+# auc_list = []
+# method_list = []
+# for _ in range(n_boots):
+#     sel_idx = np.random.choice(len(df_agg),len(df_agg),replace=True)
+#     y_test = np.asarray(df_agg['Label'].iloc[sel_idx]) == 'APL'
+#     y_pred = np.asarray(df_agg['APL'].iloc[sel_idx])
+#     roc_score = roc_auc_score(y_test, y_pred)
+#     auc_list.append(roc_score)
+#     method_list.append('CNN')
+#
+#     y_test = np.array(df_pro['Label_Bin'].iloc[sel_idx])
+#     y_pred = np.array(df_pro['Pro_Prop'].iloc[sel_idx])
+#     roc_score = roc_auc_score(y_test, y_pred)
+#     auc_list.append(roc_score)
+#     method_list.append('Promyelocyte')
+#
+# df_comp = pd.DataFrame()
+# df_comp['method'] = method_list
+# df_comp['auc'] = auc_list
+# my_pal = {"CNN": "grey", "Promyelocyte": "blue"}
+# sns.violinplot(data=df_comp,x='method',y='auc',cut=0,palette=my_pal)
+# lower_bound = np.percentile(df_comp['auc'][df_comp['method']=='CNN'],5)
+# upper_bound = np.percentile(df_comp['auc'][df_comp['method']=='Promyelocyte'],95)
+#
 
