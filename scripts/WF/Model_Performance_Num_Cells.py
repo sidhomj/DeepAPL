@@ -11,6 +11,7 @@ import seaborn as sns
 import matplotlib
 import pandas as pd
 import copy
+from matplotlib.ticker import MaxNLocator
 matplotlib.rc('font', family='sans-serif')
 gpu = 1
 
@@ -20,11 +21,11 @@ file = 'discovery_blasts.pkl'
 
 # name = 'validation_blasts'
 # file = 'validation_blasts.pkl'
-# # # # #
+# # # # # #
 # blasts = False
 # name = 'discovery_all'
 # file = 'discovery_all.pkl'
-# # # # #
+# # # # # #
 # name = 'validation_all'
 # file = 'validation_all.pkl'
 
@@ -85,13 +86,17 @@ for c in np.array(range(np.min(counts['Patient']),np.max(counts['Patient'])+1)):
     except:
         continue
 
+
+
 fig,ax = plt.subplots()
-ax.plot(count_list,auc_list)
+ax.plot(count_list,auc_list,color='b')
 ax.set_xlabel('Number of Cells per Sample',fontsize=18)
-ax.set_ylabel('AUC',fontsize=18)
+ax.set_ylabel('AUC',fontsize=18,color='b')
+ax.tick_params(axis='y', labelcolor='b')
 ax2 = ax.twinx()
 ax2.plot(count_list,num_samples,color='r')
 ax2.set_ylabel('Number of Samples', color='r',fontsize=18)  # we already handled the x-label with ax1
 ax2.tick_params(axis='y', labelcolor='r')
+ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
 plt.tight_layout()
 plt.savefig(name+'_numcells.eps')
