@@ -65,7 +65,7 @@ tables==3.6.1
 tensorboard==1.15.0
 tensorflow==1.15.2
 tensorflow-estimator==1.15.1
-tensorflow-gpu==1.15.2
+tensorflow-gpu==2.4.0
 termcolor==1.1.0
 tornado==6.0.4
 tqdm==4.47.0
