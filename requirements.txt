@@ -31,7 +31,7 @@ natsort==7.0.1
 networkx==2.4
 numba==0.48.0
 numexpr==2.7.1
-numpy==1.18.2
+numpy==1.22.0
 opencv-python==4.2.0.32
 opt-einsum==3.2.0
 packaging==20.4
